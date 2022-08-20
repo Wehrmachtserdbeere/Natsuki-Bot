@@ -1,12 +1,16 @@
 # bot.py
+import logging
+
 import aiohttp
 
 if __name__ == "__main__":
     pass
 import random
+import typing
 import os
 import time
 import discord
+from discord import app_commands
 import discord.ext
 from discord.ext import commands
 from pymep.realParser import parse
@@ -29,10 +33,47 @@ import string
 from bs4 import BeautifulSoup
 import re
 import schedule
+from discord.ext.commands import Context, Greedy
+from typing import Optional, Literal
 
-client = commands.Bot(command_prefix="n!", case_insensitive=True)
+client = commands.Bot(command_prefix="n!", case_insensitive=True, intents=discord.Intents.default())
 
 youtube_dl.utils.bug_reports_message = lambda: ''
+
+@client.command()
+@commands.guild_only()
+@commands.is_owner()
+@app_commands.default_permissions(manage_messages=True)
+async def sync(
+  ctx: Context, guilds: Greedy[discord.Object], spec: Optional[Literal["~", "*", "^"]] = None) -> None:
+    if not guilds:
+        if spec == "~":
+            synced = await ctx.bot.tree.sync(guild=ctx.guild)
+        elif spec == "*":
+            ctx.bot.tree.copy_global_to(guild=ctx.guild)
+            synced = await ctx.bot.tree.sync(guild=ctx.guild)
+        elif spec == "^":
+            ctx.bot.tree.clear_commands(guild=ctx.guild)
+            await ctx.bot.tree.sync(guild=ctx.guild)
+            synced = []
+        else:
+            synced = await ctx.bot.tree.sync()
+
+        await ctx.send(
+            f"Synced {len(synced)} commands {'globally' if spec is None else 'to the current guild.'}"
+        )
+        return
+
+    ret = 0
+    for guild in guilds:
+        try:
+            await ctx.bot.tree.sync(guild=guild)
+        except discord.HTTPException:
+            pass
+        else:
+            ret += 1
+
+    await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
 
 ytdl_format_options = {
     'format': 'bestaudio/best',
@@ -105,125 +146,28 @@ def shorten(string):
 
 print("Initializing...")
 
-@client.command(brief="I'm not!!!")                                                   # n!you_are_cute
-async def you_are_cute(ctx):
-    print("a")
-    await ctx.send("I'M NOT CUTE YOU IDIOT!!!")
-    time.sleep(3.7)
-    await ctx.send("...thanks")
+@client.tree.command(name="cute")                                                   # n!you_are_cute
+async def you_are_cute(interaction: discord.Interaction) -> None:
+    """ Tell me I'm cute """
+    await interaction.response.send_message("I'm NOT cute!!!")
 
-@client.command(brief="Get my ping in milliseconds")                                  # n!ping
-async def ping(ctx):
-    print("a")
-    await ctx.send("Pong! `" + str(client.latency * 100) + "ms`")
+@client.tree.command(name="ping")                                  # n!ping
+async def ping(interaction: discord.Interaction) -> None:
+    """ Get my Ping """
+    await interaction.response.send_message("Pong! `" + str(client.latency * 100) + "ms`")
 
-@client.command(brief="Get a random Natsuki image")                                   # Natsuki image from "Natsuki Worship"
-async def img(ctx):
-    #try:
-    #    natsu_channel = client.get_channel(773887728110010378)  # Channel id here
-    #    natsu_pics = await natsu_channel.history(limit=500).flatten()
-    #    natsu_pic = random.choice(natsu_pics)
-    #    natsu_pic_url = natsu_pic.attachments[0].url
-    #    await ctx.send(natsu_pic_url)
-    #except:
-    #    await ctx.send("Error: Please try again.")
-    #def get_random_file_from_dir(dirpath):
-    #    files = os.listdir(dirpath)
-#
-#        return os.path.join(dirpath, files[random.randint(0, len(files) - 1)])
-    toDelImg = await ctx.send("Please give me a few seconds to upload...")
+@client.tree.command(name="img")                                   # Natsuki image from "Natsuki Worship"
+async def img(interaction: discord.Interaction) -> None:
+    """ Send an image of Natsuki """
     imgimg = "D:\Alles\Alle Bilder\DDLC\\" + random.choice(os.listdir("D:\Alles\Alle Bilder\DDLC"))
-    await ctx.send(file=discord.File(imgimg))
-    await toDelImg.delete()
-    print(f"Natsuki Image -- {imgimg}")
+    await interaction.response.send_message(file=discord.File(imgimg))
 
-@client.command(name="padoru", brief="Natsuki Padoru")                                # Natsuki Padoru
-async def padoru(ctx):
-    print("Hashire Sori Yo")
-    await ctx.send(file=discord.File("D:\Alles\Alle Bilder\DDLC\Padoru Natsuki.png"))
 
-@client.command(brief="Say hello to me")                                              # n!hello
-async def hello(ctx):
-    await ctx.send("Hey there! I'm the Natsuki Bot!")
-
-@client.command(brief="Tell the truth")                                              # n!youre_the_best
-async def youre_the_best(ctx):
-    await ctx.send("You... You really think so..?")
-    time.sleep(1)
-    await ctx.send("Thank you...")
-    time.sleep(0.5)
-    await ctx.send("I-i meant Baka!")
-
-@client.command(name="yuri_is_better", brief="State your incorrect opinion")          # n!yuri_is_better
-async def yuri_is_better(ctx):
-    print("a")
-    await ctx.send("Nice joke, everyone knows **I** am the best \;D")
-    time.sleep(2)
-    await ctx.send("Wait, you're serious? Ok then...")
-    await ctx.send("https://cdn.discordapp.com/attachments/896022117487878145/903669903544963142/227-2276698_post-pol-christ-chan.png")
-
-print("Command 8 loaded")
-
-@client.command(brief="Check the Wikipedia of something")                             # n!wiki
-async def wiki(ctx, article):
-    await ctx.send("https://en.wikipedia.org/wiki/" + article)
-
-print("Command 9 loaded")
-
-@client.command(name="animepfp",brief="Send this when someone says 'Ok Anime Pfp'")
-async def animepfp(ctx):
-    await ctx.send(file=discord.File("D:\Alles\Alle Bilder\hahaloser.png"))
-
-print("Command 10 loaded")
-
-@client.command(brief="Check the Wikipedia of something without preview")            # n!nwiki
-async def nwiki(ctx, article):
-    await ctx.send("<https://en.wikipedia.org/wiki/" + article + ">")
-
-print("Command 11 loaded")
-
-@client.command(name="bug", brief="Bugreport Contact")
-async def bug(ctx):
-    print("Bugreport Contact sent")
-    await ctx.send("Currently you can report bugs to the user <@883054741263888384> or `Strawberry Mk.VI#6872`.")
-
-print("Command 12 loaded")
-
-@client.command(brief="")                                   # Get image
-async def shdf(ctx):
-    toDelShdf = await ctx.send("Please give me a few seconds to upload...")
+@client.tree.command(name="shdf")                                   # Get image
+async def shdf(interaction: discord.Interaction):
+    """ Send an SHDF image """
     shdfimg = "D:\Alles\Alle Bilder\Anime People doing Wholesome Thing\\" + random.choice(os.listdir("D:\Alles\Alle Bilder\Anime People doing Wholesome Thing"))
-    await ctx.send(file=discord.File(shdfimg))
-    await toDelShdf.delete()
-    print(f"SHDF Image -- {shdfimg}")
-
-print("Command 13 loaded")
-
-#def split(equasion):
-#    return [int(x) for x in equasion.split()]
-
-
-@client.command(name="math", brief="Do some math")                                      #n!math
-async def math(ctx, equasion):
-    try:
-        result = parse(equasion)
-    except OverflowError:
-        result = "Number too large \:("
-    except ZeroDivisionError:
-        result = "Infinite"
-    await ctx.send(result)
-
-print("Command 14 loaded")
-
-@client.command(name="timer", brief="A timer")
-async def timer(ctx, timernum: int):
-    user = ctx.message.author.id
-    while timernum != 0:
-        await asyncio.sleep(1)
-        timernum -= 1
-    await ctx.send(f'Your timer ran out, <@{user}>')
-
-print("Command 15 loaded")
+    await interaction.response.send_message(file=discord.File(shdfimg))
 
 B = ":black_large_square:"
 b = B
@@ -232,8 +176,9 @@ w = W
 R = ":red_square:"
 r = R
 
-@client.command(name="draw", brief="Use W and B to draw, use period to go to the next line")
-async def draw(ctx, drawmessage: str):
+@client.tree.command(name="draw")
+async def draw(interaction: discord.Interaction, drawmessage: str):
+    """ Draw something with B, W, R, and . """
     drawfinalmessage = []
 
     for char in drawmessage:
@@ -248,219 +193,47 @@ async def draw(ctx, drawmessage: str):
     finalmessage = ''.join(drawfinalmessage)
 
     if len(finalmessage) <= 2000:
-        await ctx.send(finalmessage)
+        await interaction.response.send_message(finalmessage)
     else:
-        await ctx.send("Message too long. It has to be ~100 characters or less.\nBecause Discord Emojis vary in string sizes, it may be more or less than 100.")
-
-print("Command 16 loaded")
-
-@client.command(name="info", brief="Get info on me and my creators")                  # n!info
-async def info(ctx):
-    print("a")
-    await ctx.send(
-        "```\n"
-        "| - - - - - - - - - - - - - - - - - - |\n"
-        "| - - - - General Information - - - - |\n"
-        "| - - - - - - - - - - - - - - - - - - |\n"
-        "Bot Version:       -  26.10.21\n"
-        "Bot Created on     -  June 29th, 2020\n"
-        "Invite:            -  No Public Invite\n"
-        "| - - - - - - - - - - - - - - - - - - |\n"
-        "| - - - - - - - Credits - - - - - - - |\n"
-        "| - - - - - - - - - - - - - - - - - - |\n"
-        "Created by         -  Strawberry Mk.V\n"
-        "Emotional Support  -  Natsuki\n"
-        "| - - - - - - - - - - - - - - - - - - |\n"
-        "| - - - - - Additional Info - - - - - |\n"
-        "| - - - - - - - - - - - - - - - - - - |\n"
-        "Regular Downtime   -  12 AM to 10 AM\n"
-        "                         German Time\n"
-        "Support Contact    -  Strawberry Mk.V\n"
-        "                                 #3287\n"
-        "| - - - - - - - - - - - - - - - - - - |\n"
-        "| - - - - - Special  Thanks - - - - - |\n"
-        "| - - - - - - - - - - - - - - - - - - |\n"
-        "Strawberry Games\n"
-        "And more!"
-        "```\n"
-    )
-
-print("Command 17 loaded")
+        await interaction.response.send_message("Message too long. It has to be ~100 characters or less.\nBecause Discord Emojis vary in string sizes, it may be more or less than 100.")
 
 # Oracle
-@client.command(name="Oracle", brief="Terry A. Davis' oracle")
-async def oracle(ctx, amount: int):
-    await ctx.send(functools.reduce(lambda line, word: line + f"{word} ", (random.choice(oraclewords) for _ in range(amount)), str()))
-
-print("Command 18 loaded")
+@client.tree.command(name="oracle")
+async def oracle(interaction: discord.Interaction, amount_of_letters: int):
+    """ Terry A. Davis' Oracle """
+    await interaction.response.send_message(functools.reduce(lambda line, word: line + f"{word} ", (random.choice(oraclewords) for _ in range(amount_of_letters)), str()))
 
 # Oracle German
-@client.command(name="oracle_ger", brief="Terry A. Davis' oracle translated into German")
-async def oracle_ger(ctx, amount_de: int):
-    await ctx.send(functools.reduce(lambda line, word: line + f"{word} ", (random.choice(oracle_de_words) for _ in range(amount_de)), str()))
+@client.tree.command(name="oracle_ger")
+async def oracle_ger(interaction: discord.Interaction, amount_de: int):
+    """ Terry A. Davis' Oracle but in German """
+    await interaction.response.send_message(functools.reduce(lambda line, word: line + f"{word} ", (random.choice(oracle_de_words) for _ in range(amount_de)), str()))
 
-print("Command 19 loaded")
 
-@client.command(brief="Get a random Fate image (Previously n!saber)")                           # Saber image
-async def fate(ctx):
-    toDelFate = await ctx.send("Please give me a few seconds to upload...")
+@client.tree.command(name="fate")                           # Fate image
+async def fate(interaction: discord.Interaction):
+    """ Get an image of the anime \"Fate\" """
     fateimg = "D:Alles\\Alle Bilder\\Fate\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Fate"))
-    await ctx.send(file=discord.File(fateimg))
-    await toDelFate.delete()
-    print(f"Fate Image -- {fateimg}")
+    await interaction.response.send_message(file=discord.File(fateimg))
 
 
-print("Command 20 loaded")
-
-@client.command(brief="hi")
-async def hi(ctx):
-    toDelHi = await ctx.send("Please give me a few seconds to upload...")
-    await ctx.send(file=discord.File("D:\Alles\Alle Bilder\Edgy Memes\hi.gif"))
-    await toDelHi.delete()
-
-print("Command 21 loaded")
-
-@client.command(brief="random sauce generator")
-async def sauce(ctx):
-    await ctx.send(random.randint(1, 399999))
-
-print("Command 22 loaded")
-
-@client.command(brief="Get a random Tanya image")                           # Tanya image from
-async def tanya(ctx):
-    toDelTanya = await ctx.send("Please give me a few seconds to upload...")
+@client.tree.command(name="tanya")                           # Tanya image from
+async def tanya(interaction: discord.Interaction):
+    """ Get an image of Tanya von Degurechaff """
     tanyaimg = "D:\Alles\Alle Bilder\Tanya Degurechaff\\" + random.choice(os.listdir("D:\Alles\Alle Bilder\Tanya Degurechaff"))
-    await ctx.send(file=discord.File(tanyaimg))
-    await toDelTanya.delete()
-    print(f"Tanya Image -- {tanyaimg}")
+    await interaction.response.send_message(file=discord.File(tanyaimg))
 
-print("Command 23 loaded")
-
-@client.command(brief="Get an NSFW Natsuki image")                          # NSFW Natsuki image
-async def nimg(ctx):
-    toDelNImg = await ctx.send("Please give me a few seconds to upload...")
-    nsfwnat = "G:\\Natsuki Private\\" + random.choice(os.listdir("G:\\Natsuki Private"))
-    await ctx.send(file=discord.File(nsfwnat))
-    await toDelNImg.delete()
-    print(f"NSFW Natsuki Image -- {nsfwnat}")
-
-print("Command 24 loaded")
-
-@client.command(brief="Roll a dice")                                        # Roll a dice
-async def dice(ctx, sides: int):
-    sides -= 1
-    result = random.randrange(sides)
-    sides += 1
-    result += 1
-    await ctx.send("Sides: " + str(sides) + "\nResult: " + str(result))
-
-print("Command 25 loaded")
-
-@client.command(brief="Tomboy yummy")                                   # Get image
-async def tomboy(ctx):
-    toDelTom = await ctx.send("Please give me a few seconds to upload...")
+@client.tree.command(name="tomboy")                                   # Get image
+async def tomboy(interaction: discord.Interaction):
+    """Mmm tomboy abs yummy licky """
     tomboyimg = "D:\Alles\Alle Bilder\Anime Tomboys\\" + random.choice(os.listdir("D:\Alles\Alle Bilder\Anime Tomboys"))
-    print(f"Tomboy Image -- {tomboyimg}")
-    await ctx.send(file=discord.File(tomboyimg))
-    await toDelTom.delete()
-
-print("Command 26 loaded")
-
-@client.command(brief="Quotes of the Left in Germany")
-async def links(ctx):
-    await ctx.send(functools.reduce(lambda line, word: line + f"{word}", (random.choice(ls_german)), str()))
-
-print("Command 27 loaded")
-
-@client.command(brief="Quotes of the Left in Germany (English)")
-async def links_en(ctx):
-    await ctx.send(functools.reduce(lambda line, word: line + f"{word}", (random.choice(ls_english)), str()))
-
-print("Command 28 loaded")
-
-#@commands.command()
-#async def join_voice(self, ctx):
-#    channel = ctx.author.voice.channel
-#    print(channel.id)
-#    await self.client.VoiceChannel.connect()
-
-#@client.command(brief="Load my Chad Playlist")
-#async def play(ctx):
-#    author = ctx.message.author
-#    channel = author.voice_channel
-#    await client.join_voice_channel(channel)
-#    await ctx.send("p!play https://www.youtube.com/playlist?list=PLqA1TPFVNT1ZJPXptEJvL2ME6gbZvuXvE")
-#    await vc.disconnect()
+    await interaction.response.send_message(file=discord.File(tomboyimg))
 
 
-#def channel():
-#    channel = ctx.author.VoiceState.channel
-
-urlArray = []
-
-@client.command(brief="WIP - Join a VC")
-async def play(ctx, *, url):
-    channel = ctx.author.voice.channel
-    urlArray.append(url)
-
-    def my_after(error):
-        coro = play(urlArray[0])
-        fut = asyncio.run_coroutine_threadsafe(coro, client.loop)
-        try:
-            fut.result()
-        except:
-            # an error happened sending the message
-            pass
-    """Joins a voice channel"""
-    if ctx.author.voice is None:
-        await ctx.send("Please join a Voice Channel first.")
-    else:
-        #channel = ctx.author.voice.channel
-        #if ctx.voice_client is not None:
-        #await channel.connect()
-        pass
-    if ctx.guild.voice_client == None:
-        await channel.connect()
-    else:
-        pass
-    print(urlArray)
-
-    async with ctx.typing():
-        if not ctx.guild.voice_client.is_playing():
-            player = await YTDLSource.from_url(urlArray[0], stream=True)
-            ctx.voice_client.play(player, after=my_after)
-            del urlArray[0]
-            await ctx.send(f'Now playing: {player.title}\n')
-
-
-
-@client.command(brief="See the queue if it exists")
-async def queue(ctx):
-    qNum = 0
-    for _ in urlArray:
-        await ctx.send(str(qNum + 1) + " - " + urlArray[qNum])
-        qNum += 1
-
-
-@client.command(brief="WIP - Leave VC")
-async def stop(ctx):
-    await ctx.guild.voice_client.disconnect()
-
-@client.command(brief="WIP - Pause the song")
-async def pause(ctx):
-    await ctx.guild.voice_client.pause()
-    await ctx.send("Audio paused.")
-
-@client.command(brief="WIP - Resume the song")
-async def unpause(ctx):
-    await ctx.guild.voice_client.resume()
-    await ctx.send("Audio resumed.")
-
-print("Command 29 loaded")
-
-@client.command(brief="If someone mentions porn")
-async def fap(ctx):
-    await ctx.send(
+@client.tree.command(name="fap")
+async def fap(interaction: discord.Interaction):
+    """ Send this if someone mentions porn """
+    await interaction.response.send_message(
     "\n☝️ أيها الإخوة ، لا تشاهدوا الإباحية. إنه يخيب آمال الرب. ☝"
     "\n☝️وروsو ، فحش مه ګورئ. دا څښتن مایوسه کوي. ☝️\n"
     "☝️Αδέλφια, μην βλέπετε πορνό. Απογοητεύει τον Κύριο. ☝\n"
@@ -469,56 +242,34 @@ async def fap(ctx):
     "☝️Brothers, do not watch porn. It disappoints the Lord.☝️\n"
     )
 
-print("Command 30 loaded")
-
-@client.command(brief="Send an image of Rem")
-async def rem(ctx):
-    toDelRem = await ctx.send("Please give me a few seconds to upload...")
+@client.tree.command(name="rem")
+async def rem(interaction: discord.Interaction):
+    """ Get an image of Rem """
     remimg = "D:\\Alles\\Alle Bilder\\Rem\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Rem\\"))
-    await ctx.send(file=discord.File(remimg))
-    await toDelRem.delete()
-    print(f"Rem Image -- {remimg}")
+    await interaction.response.send_message(file=discord.File(remimg))
 
-print("Command 31 loaded")
 
-@client.command(brief="Send an image from Kill la Kill (Slightly NSFW)")
-async def klk(ctx):
-    toDelKlk = await ctx.send("Please give me a few seconds to upload...")
+@client.tree.command(name="klk")
+async def klk(interaction: discord.Interaction):
+    """ Get an image of Kill la Kill """
     klkimg = "D:\\Alles\\Alle Bilder\\Kill la Kill\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Kill la Kill\\"))
-    await ctx.send(file=discord.File(klkimg))
-    await toDelKlk.delete()
-    print(f"Kill la Kill Image -- {klkimg}")
+    await interaction.response.send_message(file=discord.File(klkimg))
 
-print("Command 32 loaded")
-
-@client.command(brief="Create a fake hentai doujin with tags")
-async def hentai(ctx, *, name):
-    await ctx.send(
-        f'Character: `{name}`\n'
-        f'Tags : ' + functools.reduce(lambda line, word: line + f"`{word}` ", (random.choice(tags.tags) for _ in range(random.randint(1, 10))), str()) + '\n'
-        f'Artist: `' + random.choice(tags.artists) + '`\n'
-    )
-
-print("Command 33 loaded")
-
-@client.command(brief="Send a random one of Strawb's memes. This command will not be kept up-to-date and may have errors connected to file sizes.")
-async def rmeme(ctx):
-    toDelRMeme = await ctx.send("Please give me a few seconds to upload...")
+@client.tree.command(name="rmeme")
+async def rmeme(interaction: discord.Interaction):
+    """ Get one of Strawb's memes """
     try:
         mp4 = "D:\\Alles\\Alle Musik und Videos\\" + random.choice(os.listdir("D:\\Alles\\Alle Musik und Videos\\"))
-        await ctx.send(file=discord.File(mp4))
-        print(f"rmeme -- {mp4}")
+        await interaction.response.send_message(file=discord.File(mp4))
     except discord.errors.HTTPException:
-        await ctx.send("File too large, try again.")
+        await interaction.response.send_message("File too large, try again.")
     except PermissionError:
-        await ctx.send("Permission denied; Folder was probably auto-blocked because of lewdness, please try again.")
-    await toDelRMeme.delete()
+        await interaction.response.send_message("Permission denied; Folder was auto-blocked, please try again.")
 
-print("Command 34 loaded")
 
-@client.command(brief="Random RR song. Most likely to be German.")
-async def rr(ctx):
-    toDelRR = await ctx.send("Please give me a few seconds to upload...")
+@client.tree.command(name="rr")
+async def rr(interaction: discord.Interaction):
+    """ Get a NS song (Most likely German) """
     try:
         mp3 = "D:\\Alles\\Alle Musik und Videos\\RR under 8MB\\" + random.choice(os.listdir("D:\\Alles\\Alle Musik und Videos\\RR under 8MB\\"))
         now = datetime.datetime.now()
@@ -537,71 +288,43 @@ async def rr(ctx):
                 audAlbum = audiofile.tag.album
             except AttributeError:
                 audAlbum = "Unknown Album"
-            await ctx.send(file=discord.File(mp3))
-            await ctx.send(f'Title: {audTitle}\nArtist: {audArt}\nAlbum: {audAlbum}')
+            await interaction.response.send_message(file=discord.File(mp3))
             print(f"RR music -- {mp3}")
         except discord.errors.HTTPException:
-            await ctx.send("File too large, try again.")
+            await interaction.response.send_message("File too large, try again.")
         except PermissionError:
-            await ctx.send("Permission denied; Folder was probably auto-blocked because of lewdness, please try again.")
+            await interaction.response.send_message("Permission denied; Folder was probably auto-blocked because of lewdness, please try again.")
     except OSError:
-        await ctx.send("An error occoured, please try again.")
-    await toDelRR.delete()
+        await interaction.response.send_message("An error occoured, please try again.")
 
-print("Command 35 loaded")
 
-@client.command(brief="Sends you good hentai")
-async def hen(ctx):
-    toDelHen = await ctx.send("Please give me a few seconds to find a nice video...")
-    time.sleep(random.randint(1, 5))
-    vid = random.randint(1, 3)
-    if vid == 1:
-        await ctx.send("https://cdn.discordapp.com/attachments/883060024971251713/902586473319124992/hentai.mp4")
-    elif vid == 2:
-        await ctx.send("https://cdn.discordapp.com/attachments/883060024971251713/902586820326473838/Lewd.mp4")
-    elif vid == 3:
-        await ctx.send("https://cdn.discordapp.com/attachments/883060024971251713/902587106784870460/Free_Loli_Lewd.mp4")
-    await toDelHen.delete()
-
-print("Command 36 loaded")
-
-@client.command(brief="Send an image of Christ-Chan")
-async def christ(ctx):
-    toDelChr = await ctx.send("Please give me a few seconds upload...")
+@client.tree.command(name="christ_chan")
+async def christ_chan(interaction: discord.Interaction):
+    """ Get an image of Christ-Chan """
     chrImg = "D:\\Alles\\Alle Bilder\\Christ-chan\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Christ-chan\\"))
-    await ctx.send(file=discord.File(chrImg))
-    print(f"Christ-Chan image --- {chrImg}")
-    await toDelChr.delete()
-    print(f"Christ-chan Image -- {chrImg}")
+    await interaction.response.send_message(file=discord.File(chrImg))
 
-@client.command(brief="Send an image of another Chan")
-async def chan(ctx):
-    toDelChr = await ctx.send("Please give me a few seconds upload...")
+@client.tree.command(name="chan")
+async def chan(interaction: discord.Interaction):
+    """ Get an image of another Chan """
     chanImg = "D:\\Alles\\Alle Bilder\\Other Chans\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Other Chans\\"))
-    await ctx.send(file=discord.File(chanImg))
-    print(f"Christ-Chan image --- {chanImg}")
-    await toDelChr.delete()
-    print(f"Christ-chan Image -- {chanImg}")
+    await interaction.response.send_message(file=discord.File(chanImg))
 
-@client.command(brief="Send an image of Megumin")
-async def megu(ctx):
-    toDelChr = await ctx.send("Please give me a few seconds upload...")
+@client.tree.command(name="megu")
+async def megu(interaction: discord.Interaction):
+    """ Get an image of Megumin """
     chanImg = "D:\\Alles\\Alle Bilder\\Megumin\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Megumin\\"))
-    await ctx.send(file=discord.File(chanImg))
-    print(f"Megumin image --- {chanImg}")
-    await toDelChr.delete()
+    await interaction.response.send_message(file=discord.File(chanImg))
 
 # Add a command for Rosh Hashanah
 
-@client.command(brief="Safebooru search")
-async def safe(ctx, *, tags : str):
+@client.tree.command(name="safe")
+async def safe(interaction: discord.Interaction, *, tags : str):
+    """ Get an image from Safebooru """
     try:
-        #print(tags)
         ctxtags1 = tags.replace(", ", "+")
         ctxtags = ctxtags1.replace(" ", "_")
-        #print(ctxtags)
         urlSafePre = "https://safebooru.org/index.php?page=dapi&s=post&q=index&tags=" + ctxtags
-        userSafe = ctx.message.author.id
         async with aiohttp.ClientSession() as session:
             async with session.get(urlSafePre) as response:
                 html = await response.text()
@@ -610,77 +333,45 @@ async def safe(ctx, *, tags : str):
         for post in soup.find_all('post'):
             if post.get('rating') == "s":
                 file_urls.append(post.get('file_url'))
-        #print(file_urls)
-        message = await ctx.send(random.choice(file_urls))
+        await interaction.response.send_message(random.choice(file_urls) + f"\nTags recorded: `{ctxtags}`")
         print(
-            f"{userSafe} has searched for \"{tags}\"\nThis has resulted in the bot sending this link: [ {urlSafePre} ]")
-        await message.add_reaction('❌')
-        await ctx.send(f"\nTags recorded: `{ctxtags}`")
-        try:
-            await client.wait_for(
-                "reaction_add",
-                timeout=30.0,
-                check=lambda r, u: u.id == userSafe
-                    and r.emoji == "❌"
-                    and r.message.id == message.id,
-            )
-        except TimeoutError:
-            pass
-        await message.delete()
+            f"Someone has searched for \"{tags}\"\nThis has resulted in the bot sending this link: [ {urlSafePre} ]")
 
     except IndexError:
-        await ctx.send(f"No results found for {tags}.")
+        await interaction.response.send_message(f"No results found for {tags}.")
 
 
-@client.command(brief="Gelbooru search")
-async def gel(ctx, *, tags : str):
+@client.tree.command(name="gelbooru")
+async def gel(interaction: discord.Interaction, *, tags : str):
+    """ Get an image from Gelbooru (SFW only) """
     try:
         print(tags)
         ctxtags3 = tags.replace(", ", "+")
         ctxtags2 = ctxtags3.replace(" ", "_")
         print(ctxtags2)
         urlSafePre = "https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=" + ctxtags2
-        userSafe = ctx.message.author.id
         async with aiohttp.ClientSession() as session:
             async with session.get(urlSafePre) as response:
                 html = await response.text()
         soup = BeautifulSoup(html, 'html.parser')
         gel_file_urls = []
         for post in soup.find('posts').find_all('post'):
-            print(len(soup.find_all('posts')))
-            print('we get here')
-            print(post.find('rating').get_text().strip().lower())
             if post.find('rating').get_text().strip().lower() == "general":
-                print('we are past the check')
                 gel_file_urls.append(post.find('file_url').get_text())
-                print(gel_file_urls)
 
-        print(gel_file_urls)
-        message = await ctx.send(random.choice(gel_file_urls))
+        await interaction.response.send_message(random.choice(gel_file_urls) + f"\nTags recorded: `{ctxtags2}`")
         print(
-            f"{userSafe} has searched for \"{tags}\"\nThis has resulted in the bot sending this link: [ {urlSafePre} ]")
-        await message.add_reaction('❌')
-        await ctx.send(f"\nTags recorded: `{ctxtags2}`")
-        try:
-            await client.wait_for(
-                "reaction_add",
-                timeout=30.0,
-                check=lambda r, u: u.id == userSafe
-                    and r.emoji == "❌"
-                    and r.message.id == message.id,
-            )
-        except TimeoutError:
-            pass
-        await message.delete()
+            f"Someone has searched for \"{tags}\"\nThis has resulted in the bot sending this link: [ {urlSafePre} ]")
 
     except IndexError:
-        await ctx.send(f"No results found for {tags}.")
+        await interaction.response.send_message(f"No results found for {tags}.")
 
 num = 0 # I have no idea what this is for
 
 @client.event
 async def on_ready():      # check if it runs
     num = 0
+    await client.tree.sync()
     print(f'{client.user} is connected to the following guilds:\n')
     for _ in client.guilds:
         guild = client.guilds[num]
