@@ -1,44 +1,27 @@
 # bot.py
-import logging
 
 import aiohttp
 
 if __name__ == "__main__":
     pass
 import random
-import typing
 import os
-import time
 import discord
 from discord import app_commands
 import discord.ext
-from discord.ext import commands
-from pymep.realParser import parse
 from oracle import oracle as oraclewords
 from oracle_german import oracle_de as oracle_de_words
 import functools
-import asyncio
 from discord.ext import commands
 from botToken import botToken
-from discord.ext.commands import Bot
-from discord.voice_client import VoiceClient
-from linkespruche import ls_german
-from linkespruche import ls_english
-import youtube_dl
-import socket
-import tags
 import eyed3
 import datetime
-import string
 from bs4 import BeautifulSoup
-import re
-import schedule
 from discord.ext.commands import Context, Greedy
 from typing import Optional, Literal
 
 client = commands.Bot(command_prefix="n!", case_insensitive=True, intents=discord.Intents.default())
 
-youtube_dl.utils.bug_reports_message = lambda: ''
 
 @client.command()
 @commands.guild_only()
@@ -75,98 +58,37 @@ async def sync(
 
     await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
 
-ytdl_format_options = {
-    'format': 'bestaudio/best',
-    'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
-    'restrictfilenames': True,
-    'noplaylist': True,
-    'nocheckcertificate': True,
-    'ignoreerrors': False,
-    'logtostderr': False,
-    'quiet': True,
-    'no_warnings': True,
-    'default_search': 'auto',
-    'source_address': '0.0.0.0', # bind to ipv4 since ipv6 addresses cause issues sometimes
-    'download': False,
-}
-
-ffmpeg_options = {
-    'options': '-vn'
-}
-
-
-def __init__(self, ctx: commands.Context, source: discord.FFmpegPCMAudio, *, data: dict, volume: float = 0.5):
-    super().__init__(source, volume)
-
-    self.requester = ctx.author
-    self.channel = ctx.channel
-    self.data = data
-
-    self.uploader = data.get('uploader')
-    self.uploader_url = data.get('uploader_url')
-    date = data.get('upload_date')
-    self.upload_date = date[6:8] + '.' + date[4:6] + '.' + date[0:4]
-    self.title = data.get('title')
-    self.thumbnail = data.get('thumbnail')
-    self.description = data.get('description')
-    self.duration = self.parse_duration(int(data.get('duration')))
-    self.tags = data.get('tags')
-    self.url = data.get('webpage_url')
-    self.views = data.get('view_count')
-    self.likes = data.get('like_count')
-    self.dislikes = data.get('dislike_count')
-    self.stream_url = data.get('url')
-
-    def __str__(self):
-        return '**{0.title}** by **{0.uploader}**'.format(self)
-
-ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
-
-class YTDLSource(discord.PCMVolumeTransformer):
-    def __init__(self, source, *, data, volume=0.5):
-        super().__init__(source, volume)
-
-        self.data = data
-
-        self.title = data.get('title')
-        self.url = data.get('url')
-
-    @classmethod
-    async def from_url(cls, url, *, loop=None, stream=False):
-        loop = loop or asyncio.get_event_loop()
-        data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=not stream))
-        if 'entries' in data:
-            # take first item from a playlist
-            data = data['entries'][0]
-        filename = data['url'] if stream else ytdl.prepare_filename(data)
-        return cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options), data=data)
 
 def shorten(string):
     return string.replace(" ", "_")
 
+
 print("Initializing...")
+
 
 @client.tree.command(name="cute")                                                   # n!you_are_cute
 async def you_are_cute(interaction: discord.Interaction) -> None:
     """ Tell me I'm cute """
     await interaction.response.send_message("I'm NOT cute!!!")
 
+
 @client.tree.command(name="ping")                                  # n!ping
 async def ping(interaction: discord.Interaction) -> None:
     """ Get my Ping """
     await interaction.response.send_message("Pong! `" + str(client.latency * 100) + "ms`")
 
+
 @client.tree.command(name="img")                                   # Natsuki image from "Natsuki Worship"
 async def img(interaction: discord.Interaction) -> None:
     """ Send an image of Natsuki """
-    imgimg = "D:\Alles\Alle Bilder\DDLC\\" + random.choice(os.listdir("D:\Alles\Alle Bilder\DDLC"))
+    imgimg = "D:\\Alles\\Alle Bilder\\DDLC\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\DDLC"))
     await interaction.response.send_message(file=discord.File(imgimg))
 
 
 @client.tree.command(name="shdf")                                   # Get image
 async def shdf(interaction: discord.Interaction):
     """ Send an SHDF image """
-    shdfimg = "D:\Alles\Alle Bilder\Anime People doing Wholesome Thing\\" + random.choice(os.listdir("D:\Alles\Alle Bilder\Anime People doing Wholesome Thing"))
+    shdfimg = "D:\\Alles\\Alle Bilder\\Anime People doing Wholesome Thing\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Anime People doing Wholesome Thing"))
     await interaction.response.send_message(file=discord.File(shdfimg))
 
 B = ":black_large_square:"
@@ -175,6 +97,7 @@ W = ":white_large_square:"
 w = W
 R = ":red_square:"
 r = R
+
 
 @client.tree.command(name="draw")
 async def draw(interaction: discord.Interaction, drawmessage: str):
@@ -197,11 +120,13 @@ async def draw(interaction: discord.Interaction, drawmessage: str):
     else:
         await interaction.response.send_message("Message too long. It has to be ~100 characters or less.\nBecause Discord Emojis vary in string sizes, it may be more or less than 100.")
 
+
 # Oracle
 @client.tree.command(name="oracle")
 async def oracle(interaction: discord.Interaction, amount_of_letters: int):
     """ Terry A. Davis' Oracle """
     await interaction.response.send_message(functools.reduce(lambda line, word: line + f"{word} ", (random.choice(oraclewords) for _ in range(amount_of_letters)), str()))
+
 
 # Oracle German
 @client.tree.command(name="oracle_ger")
@@ -220,13 +145,14 @@ async def fate(interaction: discord.Interaction):
 @client.tree.command(name="tanya")                           # Tanya image from
 async def tanya(interaction: discord.Interaction):
     """ Get an image of Tanya von Degurechaff """
-    tanyaimg = "D:\Alles\Alle Bilder\Tanya Degurechaff\\" + random.choice(os.listdir("D:\Alles\Alle Bilder\Tanya Degurechaff"))
+    tanyaimg = "D:\\Alles\\Alle Bilder\\Tanya Degurechaff\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Tanya Degurechaff"))
     await interaction.response.send_message(file=discord.File(tanyaimg))
+
 
 @client.tree.command(name="tomboy")                                   # Get image
 async def tomboy(interaction: discord.Interaction):
     """Mmm tomboy abs yummy licky """
-    tomboyimg = "D:\Alles\Alle Bilder\Anime Tomboys\\" + random.choice(os.listdir("D:\Alles\Alle Bilder\Anime Tomboys"))
+    tomboyimg = "D:\\Alles\\Alle Bilder\\Anime Tomboys\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Anime Tomboys"))
     await interaction.response.send_message(file=discord.File(tomboyimg))
 
 
@@ -242,6 +168,7 @@ async def fap(interaction: discord.Interaction):
     "☝️Brothers, do not watch porn. It disappoints the Lord.☝️\n"
     )
 
+
 @client.tree.command(name="rem")
 async def rem(interaction: discord.Interaction):
     """ Get an image of Rem """
@@ -255,21 +182,24 @@ async def klk(interaction: discord.Interaction):
     klkimg = "D:\\Alles\\Alle Bilder\\Kill la Kill\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Kill la Kill\\"))
     await interaction.response.send_message(file=discord.File(klkimg))
 
+
 @client.tree.command(name="rmeme")
 async def rmeme(interaction: discord.Interaction):
     """ Get one of Strawb's memes """
     try:
+        await interaction.response.defer()
         mp4 = "D:\\Alles\\Alle Musik und Videos\\" + random.choice(os.listdir("D:\\Alles\\Alle Musik und Videos\\"))
-        await interaction.response.send_message(file=discord.File(mp4))
+        await interaction.followup.send(file=discord.File(mp4))
     except discord.errors.HTTPException:
-        await interaction.response.send_message("File too large, try again.")
+        await interaction.followup.send("File too large, try again.")
     except PermissionError:
-        await interaction.response.send_message("Permission denied; Folder was auto-blocked, please try again.")
+        await interaction.followup.send("Permission denied; Folder was auto-blocked, please try again.")
 
 
 @client.tree.command(name="rr")
 async def rr(interaction: discord.Interaction):
     """ Get a NS song (Most likely German) """
+    await interaction.response.defer()
     try:
         mp3 = "D:\\Alles\\Alle Musik und Videos\\RR under 8MB\\" + random.choice(os.listdir("D:\\Alles\\Alle Musik und Videos\\RR under 8MB\\"))
         now = datetime.datetime.now()
@@ -288,14 +218,15 @@ async def rr(interaction: discord.Interaction):
                 audAlbum = audiofile.tag.album
             except AttributeError:
                 audAlbum = "Unknown Album"
-            await interaction.response.send_message(file=discord.File(mp3))
+            await interaction.followup.send(file=discord.File(mp3))
+            await interaction.followup.send(f"Song: {audTitle} | Artist: {audArt} | Album: {audAlbum}")
             print(f"RR music -- {mp3}")
         except discord.errors.HTTPException:
-            await interaction.response.send_message("File too large, try again.")
+            await interaction.followup.send("File too large, try again.")
         except PermissionError:
-            await interaction.response.send_message("Permission denied; Folder was probably auto-blocked because of lewdness, please try again.")
+            await interaction.followup.send("Permission denied; Folder was probably auto-blocked because of lewdness, please try again.")
     except OSError:
-        await interaction.response.send_message("An error occoured, please try again.")
+        await interaction.followup.send("An error occoured, please try again.")
 
 
 @client.tree.command(name="christ_chan")
@@ -304,11 +235,13 @@ async def christ_chan(interaction: discord.Interaction):
     chrImg = "D:\\Alles\\Alle Bilder\\Christ-chan\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Christ-chan\\"))
     await interaction.response.send_message(file=discord.File(chrImg))
 
+
 @client.tree.command(name="chan")
 async def chan(interaction: discord.Interaction):
     """ Get an image of another Chan """
     chanImg = "D:\\Alles\\Alle Bilder\\Other Chans\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Other Chans\\"))
     await interaction.response.send_message(file=discord.File(chanImg))
+
 
 @client.tree.command(name="megu")
 async def megu(interaction: discord.Interaction):
@@ -316,24 +249,28 @@ async def megu(interaction: discord.Interaction):
     chanImg = "D:\\Alles\\Alle Bilder\\Megumin\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Megumin\\"))
     await interaction.response.send_message(file=discord.File(chanImg))
 
-# Add a command for Rosh Hashanah
 
 @client.tree.command(name="safe")
-async def safe(interaction: discord.Interaction, *, tags : str):
+async def safe(interaction: discord.Interaction, tags: str):
     """ Get an image from Safebooru """
     try:
         ctxtags1 = tags.replace(", ", "+")
         ctxtags = ctxtags1.replace(" ", "_")
-        urlSafePre = "https://safebooru.org/index.php?page=dapi&s=post&q=index&tags=" + ctxtags
+        urlSafePre = "https://safebooru.org/index.php?page=dapi&s=post&q=index&tags=" + ctxtags + "rating:s"
         async with aiohttp.ClientSession() as session:
             async with session.get(urlSafePre) as response:
                 html = await response.text()
         soup = BeautifulSoup(html, 'html.parser')
         file_urls = []
+        file_urls_length = 0
+        source = []
         for post in soup.find_all('post'):
-            if post.get('rating') == "s":
-                file_urls.append(post.get('file_url'))
-        await interaction.response.send_message(random.choice(file_urls) + f"\nTags recorded: `{ctxtags}`")
+            file_urls.append(post.get('file_url'))
+            file_urls_length += 1
+            source.append(post.get('id'))
+        the_url_num = random.randint(0, file_urls_length - 1)
+        the_url = file_urls[the_url_num]
+        await interaction.response.send_message(the_url + f"\nTags recorded: `{ctxtags}`\nID: {source[the_url_num]} | Found `{file_urls_length - 1}` other entries.")
         print(
             f"Someone has searched for \"{tags}\"\nThis has resulted in the bot sending this link: [ {urlSafePre} ]")
 
@@ -342,34 +279,126 @@ async def safe(interaction: discord.Interaction, *, tags : str):
 
 
 @client.tree.command(name="gelbooru")
-async def gel(interaction: discord.Interaction, *, tags : str):
+async def gel(interaction: discord.Interaction, tags: str, nsfw: Literal['safe', 'safe and questionable', 'all', 'explicit only'] = 'safe', gendered: Literal['Female Only', 'Male Only', 'Any'] = 'Any'):
     """ Get an image from Gelbooru (SFW only) """
+    urlSafePre = ""
     try:
         print(tags)
+        await interaction.response.defer()
         ctxtags3 = tags.replace(", ", "+")
         ctxtags2 = ctxtags3.replace(" ", "_")
         print(ctxtags2)
-        urlSafePre = "https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=" + ctxtags2
+        if nsfw == 'safe':  # Safe only
+            urlSafePre = "https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=" + ctxtags2 + "+-transgender+-transgender_flag+-transgender_colors+-transsexual+-rating:questionable+-rating:explicit"
+        elif nsfw == 'safe and questionable':  # All except explicit
+            urlSafePre = "https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=" + ctxtags2 + "+-transgender+-transgender_flag+-transgender_colors+-transsexual+-rating:explicit"
+        elif nsfw == 'all':  # All
+            urlSafePre = "https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=" + ctxtags2 + "+-transgender+-transgender_flag+-transgender_colors+-transsexual"
+        elif nsfw == 'explicit only':  # Explicit only
+            urlSafePre = "https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=" + ctxtags2 + "+-transgender+-transgender_flag+-transgender_colors+-transsexual+rating:explicit"
+        if gendered == 'Female Only':
+            urlSafePre += "+-1boy+-2boys+-3boys+-4boys+-5boys+-6%2bboys+-penis+-multiple_penises+-muscular_male"
+        elif gendered == 'Male Only':
+            urlSafePre += "+-1girl+-2girls+-3girls+-4girls+-5girls+-6%2bgirls+-vagina"
+        else:
+            pass
         async with aiohttp.ClientSession() as session:
             async with session.get(urlSafePre) as response:
                 html = await response.text()
         soup = BeautifulSoup(html, 'html.parser')
         gel_file_urls = []
+        source = []
+        gel_file_urls_length = 0
         for post in soup.find('posts').find_all('post'):
-            if post.find('rating').get_text().strip().lower() == "general":
-                gel_file_urls.append(post.find('file_url').get_text())
+            # if post.find('rating').get_text().strip().lower() == "general":
+            gel_file_urls.append(post.find('file_url').get_text())
+            source.append(post.find('id').get_text())
+            gel_file_urls_length += 1
 
-        await interaction.response.send_message(random.choice(gel_file_urls) + f"\nTags recorded: `{ctxtags2}`")
+        the_url_num = random.randint(0, gel_file_urls_length - 1)
+        the_url = gel_file_urls[the_url_num]
+        await interaction.followup.send(the_url + f"\nTags recorded: `{ctxtags2}`\nUser searched for: `{nsfw}`\nID: `{source[the_url_num]}`\nFound `{gel_file_urls_length - 1}` other entries.")
         print(
-            f"Someone has searched for \"{tags}\"\nThis has resulted in the bot sending this link: [ {urlSafePre} ]")
+            f"Someone has searched for \"{tags}\"\nThis has resulted in the bot sending this link: [ {urlSafePre} ]\nThe ID of the post is `{source[the_url_num]}`\n"
+            f"This is the link sent: -# {the_url} #-")
 
-    except IndexError:
-        await interaction.response.send_message(f"No results found for {tags}.")
+    except IndexError or discord.app_commands.errors.CommandInvokeError:
+        await interaction.followup.send(f"No results found for `{tags}`.")
 
-num = 0 # I have no idea what this is for
+    except ValueError:
+        await interaction.followup.send(f"Something went wrong. Please check the spelling of each tag and try again.\nTags used: `{tags.replace('+', ', ')}`")
+
+
+@client.tree.command(name="bleachbooru")
+async def bleach(interaction: discord.Interaction, tags: str, nsfw: Literal['safe', 'questionable and safe (high filter)', 'questionable and safe (low filter)', 'all', 'explicit only'] = 'safe'):
+    """ Get an image from Bleachbooru (Severe NSFW warning) """
+    urlSafePreBleach = ""
+    try:
+        print(tags)
+        await interaction.response.defer()
+        ctxtags6 = tags.replace(", ", "+")
+        ctxtags7 = ctxtags6.replace(" ", "_")
+        print(ctxtags7)
+        if nsfw == 'safe':  # Safe only
+            urlSafePreBleach = "https://bleachbooru.org/post.xml?limit=100?tags=" + ctxtags7 + "+-sex+-nipples+-penis+-vaginal_penetration+rating%3As"
+        elif nsfw == 'questionable and safe (high filter)':
+            urlSafePreBleach = "https://bleachbooru.org/post.xml?limit=100?tags=" + ctxtags7 + "+-sex+-nipples+-penis+-vaginal_penetration+-rating%3Aexplicit"
+        elif nsfw == 'questionable and safe (high filter)':
+            urlSafePreBleach = "https://bleachbooru.org/post.xml?limit=100?tags=" + ctxtags7 + "+-rating%3Aexplicit"
+        elif nsfw == 'all':
+            urlSafePreBleach = "https://bleachbooru.org/post.xml?limit=100?tags=" + ctxtags7
+        elif nsfw == 'explicit only':
+            urlSafePreBleach = "https://bleachbooru.org/post.xml?limit=100?tags=" + ctxtags7 + "+rating%3Aexplicit"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(urlSafePreBleach) as response:
+                bleachb = await response.text()
+        soup = BeautifulSoup(bleachb, 'xml')
+        bleach_file_urls = []
+        bleach_file_urls_length = 0
+        source = []
+        for post in soup.find('posts').find_all('post'):
+            bleach_file_urls.append(post.attrs["file_url"])
+            bleach_file_urls_length += 1
+            source.append(post.attrs["id"])
+        print("I arrived at line 363")
+        the_url_num = random.randint(0, bleach_file_urls_length - 1)
+        the_url = "https://bleachbooru.org" + bleach_file_urls[the_url_num]
+        await interaction.followup.send(the_url + f"\nTags recorded: `{tags}`\nUser searched for: `{nsfw}`  |  ID: `{source[the_url_num]}`\nFound {bleach_file_urls_length - 1} other entries (Max. 39 others).")
+        print("I arrived at line 367")
+        print(
+            f"Someone has searched for \"{tags}\"\nThis has resulted in the bot sending this link: [ {urlSafePreBleach} ]\nThe ID of the post is `{source[the_url_num]}`\n"
+            f"This is the link sent: -# {the_url} #-")
+
+    except IndexError or discord.app_commands.errors.CommandInvokeError:
+        await interaction.followup.send(f"No results found for `{tags}`.")
+
+    #except AttributeError:
+    #    await interaction.followup.send(f"Due to retarded Bleachbooru limitations, you can only search for a single tag. Please try again.\nTags recorded: `{tags}`\n`Note: This might also happen when the API is down. Check the site if it's down.`")
+
+
+#  @client.tree.command(name="e621")
+#  async def e621(interaction: discord.Interaction, *, tags: str):
+#    """ Get an image from e621 (SFW only, you damn furfag) """
+#    try:
+#        print(tags)
+#        tags = ' '.join([tag.strip().replace(' ', '_') for tag in tags.split(',')])
+#        e621_file_urls = []
+#        urlSafePreFur = "https://e621.net/posts.json"
+#        async with aiohttp.ClientSession() as session:
+#            async with session.get(urlSafePreFur, params={'tags': tags + " -trans_(lore) -lgbt_pride -trans_man_(lore) -trans_woman_(lore) -transgender_pride_colors -lgbt_history_month -rainbow_pride_flag -lgbt_couple -male%2Fmale rating:safe"}) as response:
+#                data = await response.json()
+#        for post in data['posts']:
+#            e621_file_urls.append(post['file']['url'])
+#
+#        the_url = random.choice(e621_file_urls)
+#        await interaction.response.send_message(the_url + f"\nTags recorded: `{tags}`")
+#
+#    except IndexError:
+#        await interaction.response.send_message(f"No results found for `{tags}`.")
+
 
 @client.event
-async def on_ready():      # check if it runs
+async def on_ready():      # Check if it runs
     num = 0
     await client.tree.sync()
     print(f'{client.user} is connected to the following guilds:\n')
@@ -379,9 +408,8 @@ async def on_ready():      # check if it runs
             f'{num} - {guild.name} (id: {guild.id})'
         )
         num += 1
-    num = 0
 
 print("Please wait a few seconds for the bot to connect")
 
 client.run(botToken)
-input("Just checking if it printed anything above. ")
+input("Just checking if it printed anything above.")
