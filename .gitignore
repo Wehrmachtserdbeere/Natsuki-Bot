@@ -1,0 +1,8 @@
+.env.py
+botToken.py
+longterm_lists.yaml
+whitelist.py
+/__pycache__/
+/.idea/
+/.vscode/
+/venv/
