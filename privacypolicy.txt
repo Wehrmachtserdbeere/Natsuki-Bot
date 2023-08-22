@@ -1,0 +1,57 @@
+**Privacy Statement for Natsuki Bot**
+
+Last Updated: [August 22nd, 2023]
+
+**1. Brief Introduction and Overview:**
+This Privacy Policy is meant to show you what information we collect, why we collect it, request your information.
+
+**2. Data Controller Information:**
+[Strawberry Software]
+[https://discord.gg/S8zDGPmXYv]
+
+**3. Types of Data Collected:**
+- User IDs
+- Messages and Command Inputs
+- Server Name
+
+**4. Legal Bias for Data Processing:**
+We process your data based on the necessity of data processing for the performance of our bot's functions.
+
+**5. Purpose of Data Processing:**
+We collect and process your data for the following purposes:
+- Bot functionality
+- Ensuring and enforcing compliance with the Terms of Use
+
+**6. Data Sharing:**
+We do not share your data with third parties, except for:
+- Discord Inc.
+
+**7. International Data Transfers:**
+Some of the service providers involved may be located outside the European Economic Area (EEA). As we use their data protocols, they are responsible for your data the moment it leaves out systems and enters theirs.
+
+**8. User Rights:**
+Under GDPR, you have the right to:
+- Access your data
+- Rectify inaccuracies in your data
+- Erase your data
+- Object to or restrict the processing of your data
+- Port your data to another service
+
+To exercise these rights, please contact us in the Support Server listed in point 2.
+
+**9. Data Retention:**
+We retain your data for as long as necessary to fulfill the purposes mentioned above or as required by law. When your data is no longer needed, we will securely delete it.
+
+**10. Security Measures:**
+We take appropriate technical and organizational measures to protect your data from unauthorized access or misuse.
+
+**11. Cookies and Tracking:**
+We do not use cookies or tracking technologies.
+
+**12. Contact Information:**
+For any questions, concerns, or requests related to your data and privacy, please contact us in the Support Server listed in point 2.
+
+**13. Changes to the Privacy Statement:**
+We may update this privacy statement from time to time. Changes will be communicated to you through our Discord server.
+
+Thank you for using Natsuki Bot.

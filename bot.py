@@ -37,7 +37,15 @@ import subprocess
 from datetime import timedelta
 import yaml
 
-__version__ = "2.2.4"
+__author__ = "Strawberry Software"
+__copyright__ = "Copyright 2019-2023"
+__credits__ = [ "Strawberry", "An old Friend of Strawberry's" ]
+__license__ = "MIT+NIGGER"
+__version__ = "2.2.5"
+__maintainer__ = "Strawberry"
+__status__ = "Development"
+
+__support_discord__ = "https://discord.gg/S8zDGPmXYv"
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -483,7 +491,13 @@ list_ = [
     "shota",
     "shotacon",
     "uoh", "uooh", "uoooh", "uooooh",
-    "correction"
+    "correction",
+    "coney",
+    "coni",
+    "koney",
+    "koni",
+    "kuni",
+    "cnnuy"
 ]
 
 @client.event
@@ -554,6 +568,8 @@ source_title = ""
 playnow_requester = ""
 playnow_img = ""
 playnow_title = ""
+playnow_length = 0
+playnow_url = ""
 firstsong = True
 
 # IMPORTANT:
@@ -598,6 +614,12 @@ async def _play(interaction : discord.Interaction, url : str):
         song_requester.append(interaction.user)
         song_length.append(source_length)
         song_img.append(thumbnail)
+        #if vc.is_playing():
+        #    embed = discord.Embed(color = 0xff00cc)
+        #    embed.set_thumbnail(url=song_img[0])
+        #    embed.add_field(name="Natsuki Player", value=f"Queued:\n\t[{source_title}]({song_urls[0]})\nRequested by: `{song_requester[0]}`\n\t{timedelta(seconds=song_length[0])}")
+        #    await interaction.edit_original_response(embed=embed)
+        #    break
         try:
             while song_urls:
                 print("Arrived here 2")
@@ -609,10 +631,31 @@ async def _play(interaction : discord.Interaction, url : str):
                     playnow_img = song_img[0]
                     playnow_title = songs_title[0]
                     embed = discord.Embed(color = 0xff00cc)
-                    embed.set_thumbnail(url=song_img[0])
-                    embed.add_field(name="Natsuki Player", value=f"Now playing:\n\t[{source_title}]({playnow_url})\nRequested by\n\t`{song_requester[0]}`\n\tLength: {timedelta(seconds=song_length[0])}")
-                    await interaction.followup.send(embed=embed, silent=True)
-                    playnow = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(songs_list[0], **ffmpeg_options))
+                    embed.set_thumbnail(url=playnow_img)
+                    embed.add_field(name="Natsuki Player", value=f"Now playing:\n\t[{playnow_title}]({playnow_url})\nRequested by\n\t`{playnow_requester}`\n\tLength: {timedelta(seconds=playnow_length)}")
+                    await interaction.edit_original_response(embed=embed, silent=True)
+                    playnow = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(songs_list[0], executable='ffmpeg', **ffmpeg_options))
+                    
+                    print(f"----- DEBUG -----\n"
+                        f"songs_list: {songs_list}\n"
+                        f"playnow_requester: {playnow_requester}\n"
+                        f"playnow_url: {playnow_url}\n"
+                        f"playnow_img: {playnow_img}\n"
+                        f"playnow_title: {playnow_title}\n"
+                        f"----- END OF PLAYNOW -----\n"
+                        f"----- SONG_URLS -----\n"
+                    )
+                    print(song_urls)
+                    print(f"\n----- SONG_TITLE -----\n")
+                    print(songs_title)
+                    print(f"\n----- SONG_REQUESTER -----\n")
+                    print(song_requester)
+                    print(f"\n----- SONG_LENGTH -----\n")
+                    print(song_length)
+                    print(f"\n----- SONG_IMG -----\n")
+                    print(song_img)
+                    print(f"\n----- END DEBUG LOOP -----\n")
+                    
                     if songs_list:
                         del songs_list[0]
                     if songs_title:
@@ -625,10 +668,23 @@ async def _play(interaction : discord.Interaction, url : str):
                         del song_requester[0]
                     if song_img:
                         del song_img[0]
+                    if url:
+                        del url
                     vc.play(playnow, after=play_next(interaction))
                     print("|| DEBUG || - songs_list: " + str(songs_list))
                     print("|| DEBUG || - songs_title: " + str(songs_title))
                 else:
+                    print("\n----- SONG_URLS -----\n")
+                    print(*song_urls)
+                    print(f"\n----- SONG_TITLE -----\n")
+                    print(*songs_title)
+                    print(f"\n----- SONG_REQUESTER -----\n")
+                    print(*song_requester)
+                    print(f"\n----- SONG_LENGTH -----\n")
+                    print(*song_length)
+                    print(f"\n----- SONG_IMG -----\n")
+                    print(*song_img)
+                    print(f"\n----- END DEBUG LOOP -----\n")
                     await interaction.edit_original_response(content = 'Added "' + source_title + '" to queue.')
                 while vc.is_playing():
                     await asyncio.sleep(1)
@@ -638,8 +694,8 @@ async def _play(interaction : discord.Interaction, url : str):
             await interaction.edit_original_response(content = "Permission err- wait what? Yea... \"Permission Error\". Huh.")
         except yt_dlp.DownloadError:
             await interaction.edit_original_response(content = "Video unavailable. Most likely because this content is not available in the host country.")
-        except Exception as e:
-            await interaction.edit_original_response(content = "Error: " + str(e))
+        #except Exception as e:
+        #    await interaction.edit_original_response(content = "Error: " + str(e))
     except OSError:
         await interaction.edit_original_response(content = "An error occoured, please try again.")
 
@@ -652,8 +708,9 @@ async def stop(interaction : discord.Interaction):
     voice = interaction.guild.voice_client
     if voice != None:
         await interaction.followup.send(content = "Sorry, I'll go...")
+        interaction.guild.voice_client.cleanup()
         await interaction.guild.voice_client.disconnect()
-        await interaction.guild.voice_client.cleanup()
+        interaction.guild.voice_client.cleanup()
     else:
         await interaction.followup.send(content = "I'm not connected to anything, dummy!")
 
@@ -670,6 +727,7 @@ async def queue(interaction : discord.Interaction):
             embed = discord.Embed(title = "YouTube Player", color = 0xff00cc)
             embed.set_author(name=interaction.client.user.display_name, icon_url=interaction.client.user.avatar, url="https://github.com/Wehrmachtserdbeere/Natsuki-Bot")
             j = 0
+            embed.add_field(name=playnow_requester, value=f"[{playnow_title}]({playnow_url}) - {timedelta(seconds=playnow_length)}", inline=False)
             for _ in song_urls:
                 embed.add_field(name=song_requester[j], value=f"[{songs_title[j]}]({song_urls[j]}) - {timedelta(seconds=song_length[j])}", inline=False)
                 j += 1
@@ -712,7 +770,7 @@ def play_next(interaction : discord.Interaction):
             print("|| DEBUG || - songs_title: " + str(songs_title))
 
             #ctx.guild.voice_client.cleanup()
-            #discord.FFmpegAudio.cleanup
+            discord.FFmpegAudio.cleanup()
             interaction.guild.voice_client.stop()
             #_play
     except Exception as e:
@@ -828,7 +886,27 @@ async def rr_play(interaction : discord.Interaction):
         await interaction.edit_original_response(content = "An error occoured, please try again.")
 
 
-# END OF MUSIC
+
+
+@client.tree.command(name="about_me")
+async def about_me(interaction : discord.Interaction, complexity : Literal['Simplified', 'Complex'] = 'Simplified'):
+    '''Show general info about me'''
+    embed = discord.Embed(colour = 0xff00cc, title = "Natsuki Bot", timestamp = datetime.now())
+    embed.set_thumbnail(url = "https://img3.gelbooru.com/images/dc/b0/dcb07993482d9b81ab3d521c7d0d504a.jpg") # <-- EDIT this to your desired thumbnail
+    embed.add_field(name = "Author:", value = f"[{__author__}](https://wehrmachtserdbeere.github.io/)", inline = False) # <-- EDIT this to your website
+    embed.add_field(name = "Support:", value = f"[Support Server](https://discord.gg/S8zDGPmXYv)", inline = False) # <-- EDIT this to your support site.
+    if complexity == 'Complex':
+        embed.add_field(name = "Python Version:", value = f"`{sys.version}`", inline = False)
+        embed.add_field(name = "Discord.py Version:", value = f"`{version('discord')}`", inline = False)
+        embed.add_field(name = "FFMPEG Version:", value = f"`{version('ffmpeg')}`", inline = False)
+    embed.set_footer(text = f"Bot Version: `{__version__}`")
+    await interaction.response.send_message(embed = embed)
+
+
+@client.tree.command(name="privacy")
+async def privacy(interaction : discord.Interaction):
+    '''See the Privacy Policy of the bot'''
+    await interaction.response.send_message(file = discord.File("./privacypolicy.txt")) # <-- EDIT this to your privacy policy location.
 
 bot_info = (
     "About me --- " + str(date.today()) + "\n" +
@@ -838,16 +916,10 @@ bot_info = (
     "Bot version: " + __version__
 )
 
-@client.tree.command(name="about_me")
-async def about_me(interaction : discord.Interaction):
-    await interaction.response.send_message(bot_info)
-
-
-
 @client.tree.command(name="bug_report")
 async def bug_report(interaction : discord.Interaction, short_desc : str, steps_to_repeat : str, urgent : Literal['Yes', 'No'] = 'No'):
     await interaction.response.defer()
-    with open("longterm_lists.yaml", "r") as file:
+    with open("longterm_lists.yaml", "r") as file: # <-- EDIT this to your yaml. Read the Readme for more information.
         data = yaml.safe_load(file)
     if "blacklist" in data and data["blacklist"]:
         blacklist = data["blacklist"]
@@ -861,7 +933,7 @@ async def bug_report(interaction : discord.Interaction, short_desc : str, steps_
         embed.add_field(name="Steps to Repeat", value=steps_to_repeat, inline=False)
         embed.add_field(name="Urgent?", value=urgent, inline=False)
         embed.set_footer(text=bot_info)
-        channel = interaction.client.get_channel(1124728423810596914) # EDIT this to the your own dev channel if you have one.
+        channel = interaction.client.get_channel(1124728423810596914) # <-- EDIT this to the your own dev channel if you have one.
         user = interaction.user.name
         userid = interaction.user.id
         if urgent == "Yes":
