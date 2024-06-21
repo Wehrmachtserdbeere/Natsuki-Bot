@@ -1,6 +1,7 @@
 # bot.py
 
 import asyncio
+import json
 import tkinter
 import aiohttp
 
@@ -27,21 +28,19 @@ from datetime import datetime
 import re
 from pathlib import Path
 import yt_dlp # Yes, trying to add music streaming
-import nacl
-import time
 from datetime import date
 from importlib.metadata import version
 import logging
 import requests
-import subprocess
 from datetime import timedelta
 import yaml
+import subprocess
 
 __author__ = "Strawberry Software"
-__copyright__ = "Copyright 2019-2023"
+__copyright__ = "Copyright 2019-2024"
 __credits__ = [ "Strawberry", "An old Friend of Strawberry's" ]
 __license__ = "MIT+NIGGER"
-__version__ = "2.2.5"
+__version__ = "2.2.6"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 
@@ -462,8 +461,8 @@ async def bleach(interaction: discord.Interaction, tags: str, nsfw: Literal['saf
             urlSafePreBleach = "https://bleachbooru.org/post.xml?limit=100?tags=" + ctxtags7 + "+rating%3Aexplicit"
         async with aiohttp.ClientSession() as session:
             async with session.get(urlSafePreBleach) as response:
-                bleachb = await response.text()
-        soup = BeautifulSoup(bleachb, 'xml')
+                html = await response.text()
+        soup = BeautifulSoup(html, 'html.parser')
         bleach_file_urls = []
         bleach_file_urls_length = 0
         source = []
@@ -481,6 +480,39 @@ async def bleach(interaction: discord.Interaction, tags: str, nsfw: Literal['saf
             f"This is the link sent: -# {the_url} #-")
     except IndexError or discord.app_commands.errors.CommandInvokeError:
         await interaction.followup.send(f"No results found for `{tags}`.")
+
+@client.tree.command(name="roll")
+@app_commands.describe(sides = "How many sides your dice should have")
+@app_commands.describe(rolls = "How many dices you want to roll")
+@app_commands.describe(highlight_number = "Highlight the x-th roll (counts from 1 upwards)")
+async def roll(interaction: discord.Interaction, sides: int, rolls: int = 1, highlight_number: int = None):
+    """ Roll a die """
+    #try:
+    result = []
+    response = ""
+    if sides <= 0:
+        await interaction.response.send_message("Please enter a positive, non-zero number when choosing sides.", ephemeral = True)
+    elif rolls <= 0:
+        await interaction.response.send_message("Please enter a positive, non-zero number when choosing how many rolls you want to make.", ephemeral = True)
+    elif sides >= sys.maxsize:
+        await interaction.response.send_message("Please enter a smaller number for how many sides your roll has.", ephemeral = True)
+    elif rolls >= sys.maxsize:
+        await interaction.response.send_message("Please enter a smaller number for how many roll you want to make.", ephemeral = True)
+    else:
+        try:
+            for roll in range(rolls):
+                result.append(random.randint(1, sides))
+            response = f"Input: `{rolls}d{sides}`\nResult: " + ", ".join(map(str, result))
+            if highlight_number:
+                if highlight_number <= 0:
+                    await interaction.response.send_message("Please enter a positive, non-zero number when choosing the highlighted roll.", ephemeral = True)
+                if highlight_number >= rolls + 2:
+                    await interaction.response.send_message("Please ensure that the number you want to highlight is not higher than the number of rolls.", ephemeral = True)
+                else:
+                    response = response + f"\nHighlighted Roll: {result[highlight_number - 1]}"
+            await interaction.response.send_message(response)
+        except Exception as e:
+            await interaction.response.send_message(f"Error rolling die: {e}", ephemeral = True)
 
 
 list_ = [
@@ -519,6 +551,201 @@ async def on_message(message):
 
     if flag:
         await message.add_reaction('😭')
+
+DOWNLOAD_DIR = ".\\webm_downloads"
+
+def get_video_frame_rate(file_path):
+    command = ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=r_frame_rate", "-of", "json", file_path]
+    result = subprocess.run(command, capture_output=True, text=True)
+    
+    if result.returncode == 0:
+        data = json.loads(result.stdout)
+        frame_rate = data['streams'][0]['r_frame_rate']
+        numerator, denominator = frame_rate.split('/')
+        return int(numerator) / int(denominator)
+    else:
+        print("Error: Unable to get video frame rate.")
+        return None
+
+def is_file_under_25mb(file_path):
+    # 25MB in bytes
+    max_size = 25 * 1024 * 1024  # 25 * 1024 * 1024 = 26214400 bytes
+    file_size = os.path.getsize(file_path)
+    return file_size < max_size
+
+@client.event
+async def on_message(message):
+    # Avoid responding to the bot's own messages
+    if message.author == client.user:
+        return
+
+    has_webm_flag = False
+    has_file_too_large = False
+    conversion_errors = []
+    attachment_list = []
+    files_list = []
+
+    # Check for attachments in the message
+    for attachment in message.attachments:
+        if attachment.filename.lower().endswith('.webm'):
+            has_webm_flag = True
+            print(f'Found a WebM attachment: {attachment.filename}')
+            # Download the WebM file
+            file_path = await download_attachment(attachment)
+            file_name, ext = os.path.splitext(file_path)
+            output_name = f"{file_name}.mp4"
+            framerate = get_video_frame_rate(file_path)
+
+            command = [
+                "ffmpeg",
+                "-y",
+                "-fflags",
+                "+genpts",
+                "-i",
+                file_path,
+                "-r",
+                str(framerate),
+                output_name
+            ]
+
+            try:
+                subprocess.run(command, check = True)
+                os.remove(file_path) # Delete original file
+
+                files_list.append(output_name)
+                
+                if is_file_under_25mb(output_name):
+                    attachment_list.append(discord.File(fp = f"{output_name}", spoiler = attachment.is_spoiler()))
+                else:
+                    if not has_file_too_large:
+                        has_file_too_large = True
+                    conversion_errors.append(f"{output_name}")
+                    print(f"File too large: {output_name}")
+            except subprocess.CalledProcessError as e:
+                print(f"ERROR: {e}")
+
+    if has_webm_flag:
+        if not has_file_too_large:
+            await message.channel.send("Converted your webms!", files = attachment_list)
+            for _ in files_list:
+                os.remove(f"{_}")
+        elif has_file_too_large:
+            if attachment_list:
+                await message.channel.send(f"Converted your webms, but there were some problems. The following file(s) were too large to send: {conversion_errors}", files = attachment_list)
+                for _ in files_list:
+                    os.remove(f"{_}")
+            else:
+                await message.channel.send(f"No webms were converted, whatever you sent was too large. You still don't compare with Strawb :P\nThe following file(s) were too large: {conversion_errors}")
+        else:
+            await message.channel.send("Error")
+
+
+def download_video(url, download_folder):
+    if not os.path.exists(download_folder):
+        os.makedirs(download_folder)
+    
+    # Extracting the filename from the URL to use as the file name
+    filename = url.split('/')[-1]
+    file_path = os.path.join(download_folder, filename)
+    
+    response = requests.get(url, stream=True)
+    if response.status_code == 200:
+        with open(file_path, 'wb') as file:
+            for chunk in response.iter_content(chunk_size=1024):
+                file.write(chunk)
+        print(f"Download of video completed: {file_path}")
+        return file_path
+    else:
+        print(f"Failed to retrieve video. Status code: {response.status_code}")
+        return None
+
+@client.tree.command(name="convert_webm")
+async def convert_webm(interaction: discord.Interaction, video_url : str, silent : bool = False, format : Literal['mp4', 'gif'] = 'mp4'):
+    await interaction.response.defer(ephemeral = silent, thinking = True)
+    if video_url is None:
+        await interaction.edit_original_response("Please add a link to a video.")
+        return
+    
+    has_webm_flag = False
+    has_file_too_large = False
+    conversion_errors = []
+
+    if video_url is not None:
+        # Download the WebM file
+        file_path = download_video(video_url, os.path.abspath(os.getcwd()) + "\\webm_downloads")
+        has_webm_flag = True
+        file_name, ext = os.path.splitext(file_path)
+        framerate = get_video_frame_rate(file_path)
+
+        if format == "mp4":
+            output_name = f"{file_name}.mp4"
+            command = [
+                "ffmpeg",
+                "-y",
+                "-fflags",
+                "+genpts",
+                "-i",
+                file_path,
+                "-r",
+                str(framerate),
+                output_name
+            ]
+        elif format == "gif":
+            output_name = f"{file_name}.gif"
+            command = [
+                "ffmpeg",
+                "-y",  # Overwrite output files without asking
+                "-i", file_path,  # Input file path
+                "-r", str(framerate),  # Frame rate (frames per second) of the output GIF
+                "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2",  # Ensure width and height are divisible by 2 (required by GIF)
+                "-f", "gif",  # Output format is GIF
+                output_name  # Output file name
+            ]
+
+        try:
+            subprocess.run(command, check = True)
+            os.remove(file_path) # Delete original file
+
+            if is_file_under_25mb(output_name):
+                video_to_be_sent = discord.File(fp = f"{output_name}")
+            else:
+                if not has_file_too_large:
+                    has_file_too_large = True
+                conversion_errors.append(f"{output_name}")
+                print(f"File too large: {output_name}")
+        except subprocess.CalledProcessError as e:
+            print(f"ERROR: {e}")
+
+    if has_webm_flag:
+        if not has_file_too_large:
+            await interaction.followup.send("Converted your webms!", file = video_to_be_sent, ephemeral = silent)
+            os.remove(f"{output_name}")
+            print("Successfully converted video.")
+        elif has_file_too_large:
+            await interaction.edit_original_response(f"No webms were converted, whatever you sent was too large. You still don't compare with Strawb :P\nThe following file(s) were too large: {conversion_errors}")
+        else:
+            await interaction.edit_original_response("Error")
+
+
+
+async def download_attachment(attachment):
+    # Ensure the download directory exists
+    if not os.path.exists(DOWNLOAD_DIR):
+        os.makedirs(DOWNLOAD_DIR)
+
+    # Define the path where the file will be saved
+    file_path = os.path.join(DOWNLOAD_DIR, attachment.filename)
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(attachment.url) as response:
+            if response.status == 200:
+                with open(file_path, 'wb') as f:
+                    f.write(await response.read())
+                print(f'Successfully downloaded {attachment.filename} to {file_path}')
+                return file_path
+            else:
+                print(f'Failed to download {attachment.filename}, status code: {response.status}')
+                return None
 
 @client.tree.command(name="doompilled")
 async def doom(interaction: discord.Interaction):
@@ -633,7 +860,7 @@ async def _play(interaction : discord.Interaction, url : str):
                     embed = discord.Embed(color = 0xff00cc)
                     embed.set_thumbnail(url=playnow_img)
                     embed.add_field(name="Natsuki Player", value=f"Now playing:\n\t[{playnow_title}]({playnow_url})\nRequested by\n\t`{playnow_requester}`\n\tLength: {timedelta(seconds=playnow_length)}")
-                    await interaction.edit_original_response(embed=embed, silent=True)
+                    await interaction.edit_original_response(embed=embed)
                     playnow = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(songs_list[0], executable='ffmpeg', **ffmpeg_options))
                     
                     print(f"----- DEBUG -----\n"
@@ -668,8 +895,8 @@ async def _play(interaction : discord.Interaction, url : str):
                         del song_requester[0]
                     if song_img:
                         del song_img[0]
-                    if url:
-                        del url
+                    #if url:
+                    #    del url
                     vc.play(playnow, after=play_next(interaction))
                     print("|| DEBUG || - songs_list: " + str(songs_list))
                     print("|| DEBUG || - songs_title: " + str(songs_title))
@@ -797,7 +1024,6 @@ async def skip(interaction : discord.Interaction):
         voice = interaction.guild.voice_client
         if voice.is_playing():
             voice.stop()
-            await interaction.followup.send(content = "Skipped!")
     except Exception as e:
         await interaction.followup.send(content = "Error! Something happened! \n" + str(e))
 

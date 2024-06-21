@@ -13,6 +13,7 @@ This Privacy Policy is meant to show you what information we collect, why we col
 - User IDs
 - Messages and Command Inputs
 - Server Name
+- Publicly posted WEBM Videos (does not include privately posted WEBM videos)
 
 **4. Legal Bias for Data Processing:**
 We process your data based on the necessity of data processing for the performance of our bot's functions.
