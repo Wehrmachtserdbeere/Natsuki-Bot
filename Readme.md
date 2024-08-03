@@ -31,7 +31,7 @@ To get your Bot Token:
 ```json
 {
     "true_natsukians": [
-        "YOUR_USER_ID"
+        "Put your own User ID here. This is used for Administrators who can use commands like adding and removing people from the blacklist.",
     ],
     "blacklist": [],
     "whitelist": []
