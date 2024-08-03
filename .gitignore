@@ -1,6 +1,6 @@
 .env.py
 botToken.py
-longterm_lists.yaml
+longterm_lists.json
 /__pycache__/
 /.idea/
 /.vscode/
