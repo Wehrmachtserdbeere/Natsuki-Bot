@@ -5,7 +5,7 @@
 1. Clone the repository or download the source directly and put it into a folder with nothing else inside.
 2. Create and fill two files:
 - `botToken.py`
-- `longterm_lists.yaml`
+- `longterm_lists.json`
 3. (Optional) Using Command Prompt, go to the bot directory and run the following command:
 	`$ pip install -r requirements.txt`
 	This should install the modules required to run the bot.
@@ -27,9 +27,15 @@ To get your Bot Token:
 
 **Do not share your Bot Token!**  
 
-`longterm_lists.yaml`
-```yaml
-blacklist: []
+`longterm_lists.json`
+```json
+{
+    "true_natsukians": [
+        "YOUR_USER_ID"
+    ],
+    "blacklist": [],
+    "whitelist": []
+}
 ```
 That's all for this file. It may be replaced with an optional globally shared blacklist one day.
 
