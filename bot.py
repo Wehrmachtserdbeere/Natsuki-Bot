@@ -33,7 +33,7 @@ from importlib.metadata import version
 import logging
 import requests
 from datetime import timedelta
-import yaml
+import json
 import subprocess
 from datetime import timedelta
 
@@ -158,11 +158,37 @@ def search(query):
 
 print("Initializing...")
 
+# Load blacklist data from a JSON file
+def load_longterm_lists(filename="./longterm_lists.json"):
+    with open(filename, 'r') as file:
+        return json.load(file)
+
+# Check if user is in blacklist and return details
+def check_user_in_blacklist(user_id, blacklist_data):
+    for entry in blacklist_data['blacklist']:
+        if entry['uid'] == user_id:
+            return entry['uid'], entry['reason']
+    return False
+
+# Save data to JSON file
+def save_data(data, filename="./longterm_lists.json"):
+    with open(filename, 'w') as file:
+        json.dump(data, file, indent=4)
+
 
 @client.tree.command(name="cute")                                                   # n!you_are_cute
 async def you_are_cute(interaction: discord.Interaction) -> None:
     """ Tell me I'm cute """
-    await interaction.response.send_message("I'm NOT cute!!!")
+
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else:        
+        await interaction.response.send_message("I'm NOT cute!!!")
 
 
 @client.tree.command(name="ping")                                  # n!ping
@@ -174,15 +200,33 @@ async def ping(interaction: discord.Interaction) -> None:
 @client.tree.command(name="img")                                   # Natsuki image from "Natsuki Worship" <-- Oh wow this is an old comment! Has to be from 2019! Thank God I don't store my images on Discord anymore :P.
 async def img(interaction: discord.Interaction) -> None:
     """ Send an image of Natsuki """
-    imgimg = "D:\\Alles\\Alle Bilder\\DDLC\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\DDLC")) # <-- EDIT this to any path with images you like.
-    await interaction.response.send_message(file=discord.File(imgimg))
+
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else: 
+        imgimg = "D:\\Alles\\Alle Bilder\\DDLC\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\DDLC")) # <-- EDIT this to any path with images you like.
+        await interaction.response.send_message(file=discord.File(imgimg))
 
 
 @client.tree.command(name="shdf")                                   # Get image <-- Can ignore unless you find a meaning behind "shdf".
 async def shdf(interaction: discord.Interaction):
     """ Send an SHDF image """
-    shdfimg = "D:\\Alles\\Alle Bilder\\Anime People doing Wholesome Thing\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Anime People doing Wholesome Thing")) # <-- EDIT this to any path with images you like.
-    await interaction.response.send_message(file=discord.File(shdfimg))
+
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else: 
+        shdfimg = "D:\\Alles\\Alle Bilder\\Anime People doing Wholesome Thing\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Anime People doing Wholesome Thing")) # <-- EDIT this to any path with images you like.
+        await interaction.response.send_message(file=discord.File(shdfimg))
 
 B = ":black_large_square:"
 b = B
@@ -195,58 +239,106 @@ r = R
 @client.tree.command(name="draw")
 async def draw(interaction: discord.Interaction, drawmessage: str):
     """ Draw something with B, W, R, and . """
-    drawfinalmessage = []
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else: 
+        drawfinalmessage = []
 
-    for char in drawmessage:
-        if char == "B" or char == "b":
-            drawfinalmessage.append(str(B))
-        elif char == "W" or char == "w":
-            drawfinalmessage.append(str(W))
-        elif char == "R" or char == "r":
-            drawfinalmessage.append(str(R))
-        elif char == ".":
-            drawfinalmessage.append("\n")
-    finalmessage = ''.join(drawfinalmessage)
+        for char in drawmessage:
+            if char == "B" or char == "b":
+                drawfinalmessage.append(str(B))
+            elif char == "W" or char == "w":
+                drawfinalmessage.append(str(W))
+            elif char == "R" or char == "r":
+                drawfinalmessage.append(str(R))
+            elif char == ".":
+                drawfinalmessage.append("\n")
+        finalmessage = ''.join(drawfinalmessage)
 
-    if len(finalmessage) <= 2000:
-        await interaction.response.send_message(finalmessage)
-    else:
-        await interaction.response.send_message("Message too long. It has to be ~100 characters or less.\nBecause Discord Emojis vary in string sizes, it may be more or less than 100.")
+        if len(finalmessage) <= 2000:
+            await interaction.response.send_message(finalmessage)
+        else:
+            await interaction.response.send_message("Message too long. It has to be ~100 characters or less.\nBecause Discord Emojis vary in string sizes, it may be more or less than 100.")
 
 
 # Oracle
 @client.tree.command(name="oracle")
 async def oracle(interaction: discord.Interaction, amount_of_letters: int):
     """ Terry A. Davis' Oracle """
-    await interaction.response.send_message(functools.reduce(lambda line, word: line + f"{word} ", (random.choice(oraclewords) for _ in range(amount_of_letters)), str()))
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else: 
+        await interaction.response.send_message(functools.reduce(lambda line, word: line + f"{word} ", (random.choice(oraclewords) for _ in range(amount_of_letters)), str()))
 
 
 # Oracle German
 @client.tree.command(name="oracle_ger")
 async def oracle_ger(interaction: discord.Interaction, amount_de: int):
     """ Terry A. Davis' Oracle but in German """
-    await interaction.response.send_message(functools.reduce(lambda line, word: line + f"{word} ", (random.choice(oracle_de_words) for _ in range(amount_de)), str()))
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else:
+        await interaction.response.send_message(functools.reduce(lambda line, word: line + f"{word} ", (random.choice(oracle_de_words) for _ in range(amount_de)), str()))
 
 
 @client.tree.command(name="fate")                           # Fate image
 async def fate(interaction: discord.Interaction):
     """ Get an image of the anime \"Fate\" """
-    fateimg = "D:Alles\\Alle Bilder\\Fate\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Fate")) # <-- EDIT this if you have a folder for Fate images.
-    await interaction.response.send_message(file=discord.File(fateimg))
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else:
+        fateimg = "D:Alles\\Alle Bilder\\Fate\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Fate")) # <-- EDIT this if you have a folder for Fate images.
+        await interaction.response.send_message(file=discord.File(fateimg))
 
 
 @client.tree.command(name="tanya")                           # Tanya image from
 async def tanya(interaction: discord.Interaction):
     """ Get an image of Tanya von Degurechaff """
-    tanyaimg = "D:\\Alles\\Alle Bilder\\Tanya Degurechaff\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Tanya Degurechaff")) # <-- EDIT this if you have a folder for images of anything called "tanya".
-    await interaction.response.send_message(file=discord.File(tanyaimg))
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else:
+        tanyaimg = "D:\\Alles\\Alle Bilder\\Tanya Degurechaff\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Tanya Degurechaff")) # <-- EDIT this if you have a folder for images of anything called "tanya".
+        await interaction.response.send_message(file=discord.File(tanyaimg))
 
 
 @client.tree.command(name="tomboy")                                   # Get image
 async def tomboy(interaction: discord.Interaction):
     """Mmm tomboy abs yummy licky """
-    tomboyimg = "D:\\Alles\\Alle Bilder\\Anime Tomboys\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Anime Tomboys")) # <-- EDIT this to your Anime Tomboys folder. I know you have one.
-    await interaction.response.send_message(file=discord.File(tomboyimg))
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else:
+        tomboyimg = "D:\\Alles\\Alle Bilder\\Anime Tomboys\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Anime Tomboys")) # <-- EDIT this to your Anime Tomboys folder. I know you have one.
+        await interaction.response.send_message(file=discord.File(tomboyimg))
 
 
 @client.tree.command(name="fap")
@@ -265,28 +357,52 @@ async def fap(interaction: discord.Interaction):
 @client.tree.command(name="rem")
 async def rem(interaction: discord.Interaction):
     """ Get an image of Rem """
-    remimg = "D:\\Alles\\Alle Bilder\\Rem\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Rem\\")) # <-- EDIT this to images of Rem.
-    await interaction.response.send_message(file=discord.File(remimg))
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else:
+        remimg = "D:\\Alles\\Alle Bilder\\Rem\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Rem\\")) # <-- EDIT this to images of Rem.
+        await interaction.response.send_message(file=discord.File(remimg))
 
 
 @client.tree.command(name="klk")
 async def klk(interaction: discord.Interaction):
     """ Get an image of Kill la Kill """
-    klkimg = "D:\\Alles\\Alle Bilder\\Kill la Kill\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Kill la Kill\\")) # <-- EDIT this to Kill La Kill images.
-    await interaction.response.send_message(file=discord.File(klkimg))
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else:
+        klkimg = "D:\\Alles\\Alle Bilder\\Kill la Kill\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Kill la Kill\\")) # <-- EDIT this to Kill La Kill images.
+        await interaction.response.send_message(file=discord.File(klkimg))
 
 
 @client.tree.command(name="rmeme")
 async def rmeme(interaction: discord.Interaction):
     """ Get one of Strawb's memes """
-    await interaction.response.defer()
-    try:
-        mp4 = "D:\\Alles\\Alle Musik und Videos\\" + random.choice(os.listdir("D:\\Alles\\Alle Musik und Videos\\")) # <-- EDIT this to a path with video memes.
-        await interaction.followup.send(file=discord.File(mp4))
-    except discord.errors.HTTPException:
-        await interaction.followup.send("File too large, try again.")
-    except PermissionError:
-        await interaction.followup.send("Permission denied; Folder was auto-blocked, please try again.")
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else:
+        await interaction.response.defer()
+        try:
+            mp4 = "D:\\Alles\\Alle Musik und Videos\\" + random.choice(os.listdir("D:\\Alles\\Alle Musik und Videos\\")) # <-- EDIT this to a path with video memes.
+            await interaction.followup.send(file=discord.File(mp4))
+        except discord.errors.HTTPException:
+            await interaction.followup.send("File too large, try again.")
+        except PermissionError:
+            await interaction.followup.send("Permission denied; Folder was auto-blocked, please try again.")
 
 
 folders = [
@@ -297,139 +413,187 @@ folders = [
 @client.tree.command(name="rr")
 async def rr(interaction: discord.Interaction):
     """ Get a NS song (Most likely German) """
-    await interaction.response.defer()
-    try:
-        #mp3 = "D:\\Alles\\Alle Musik und Videos\\RR under 8MB\\" + random.choice(os.listdir("D:\\Alles\\Alle Musik und Videos\\RR under 8MB\\"))
-        mp3 = random.choice(mp3_path)
-        #print(f'RR Requested | Song: {mp3}')
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else:
+        await interaction.response.defer()
         try:
-            audiofile = eyed3.load(mp3)
+            #mp3 = "D:\\Alles\\Alle Musik und Videos\\RR under 8MB\\" + random.choice(os.listdir("D:\\Alles\\Alle Musik und Videos\\RR under 8MB\\"))
+            mp3 = random.choice(mp3_path)
+            #print(f'RR Requested | Song: {mp3}')
             try:
-                audTitle = audiofile.tag.title
-            except AttributeError:
-                audTitle = "Unknown Title"
-            try:
-                audArt = audiofile.tag.artist
-            except AttributeError:
-                audArt = "Unknown Artist"
-            try:
-                audAlbum = audiofile.tag.album
-            except AttributeError:
-                audAlbum = "Unknown Album"
-            await interaction.followup.send(f"Song: {audTitle} | Artist: {audArt} | Album: {audAlbum}", file=discord.File(mp3))
-            #await interaction.followup.send(f"Song: {audTitle} | Artist: {audArt} | Album: {audAlbum}")
-            print(f"RR music -- {mp3}")
-        except discord.errors.HTTPException:
-            await interaction.followup.send("File too large, try again.")
-        except PermissionError:
-            await interaction.followup.send("Permission denied; Folder was probably auto-blocked because of lewdness, please try again.")
-    except OSError:
-        await interaction.followup.send("An error occoured, please try again.")
+                audiofile = eyed3.load(mp3)
+                try:
+                    audTitle = audiofile.tag.title
+                except AttributeError:
+                    audTitle = "Unknown Title"
+                try:
+                    audArt = audiofile.tag.artist
+                except AttributeError:
+                    audArt = "Unknown Artist"
+                try:
+                    audAlbum = audiofile.tag.album
+                except AttributeError:
+                    audAlbum = "Unknown Album"
+                await interaction.followup.send(f"Song: {audTitle} | Artist: {audArt} | Album: {audAlbum}", file=discord.File(mp3))
+                #await interaction.followup.send(f"Song: {audTitle} | Artist: {audArt} | Album: {audAlbum}")
+                print(f"RR music -- {mp3}")
+            except discord.errors.HTTPException:
+                await interaction.followup.send("File too large, try again.")
+            except PermissionError:
+                await interaction.followup.send("Permission denied; Folder was probably auto-blocked because of lewdness, please try again.")
+        except OSError:
+            await interaction.followup.send("An error occoured, please try again.")
 
 
 @client.tree.command(name="christ_chan")
 async def christ_chan(interaction: discord.Interaction):
     """ Get an image of Christ-Chan """
-    chrImg = "D:\\Alles\\Alle Bilder\\Christ-chan\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Christ-chan\\")) # <-- EDIT this to a path with images of Christ Chan. Not to be confused with Chris Chan.
-    await interaction.response.send_message(file=discord.File(chrImg))
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else:
+        chrImg = "D:\\Alles\\Alle Bilder\\Christ-chan\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Christ-chan\\")) # <-- EDIT this to a path with images of Christ Chan. Not to be confused with Chris Chan.
+        await interaction.response.send_message(file=discord.File(chrImg))
 
 
 @client.tree.command(name="chan")
 async def chan(interaction: discord.Interaction):
     """ Get an image of another Chan """
-    chanImg = "D:\\Alles\\Alle Bilder\\Other Chans\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Other Chans\\")) # <-- EDIT this to a path with images of other -chan characters.
-    await interaction.response.send_message(file=discord.File(chanImg))
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else:
+        chanImg = "D:\\Alles\\Alle Bilder\\Other Chans\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Other Chans\\")) # <-- EDIT this to a path with images of other -chan characters.
+        await interaction.response.send_message(file=discord.File(chanImg))
 
 
 @client.tree.command(name="megu")
 async def megu(interaction: discord.Interaction):
     """ Get an image of Megumin """
-    chanImg = "D:\\Alles\\Alle Bilder\\Megumin\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Megumin\\")) # <-- EDIT this to a path with Megumin images.
-    await interaction.response.send_message(file=discord.File(chanImg))
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else:
+        chanImg = "D:\\Alles\\Alle Bilder\\Megumin\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Megumin\\")) # <-- EDIT this to a path with Megumin images.
+        await interaction.response.send_message(file=discord.File(chanImg))
 
 
 @client.tree.command(name="safe")
 async def safe(interaction: discord.Interaction, tags: str):
     """ Get an image from Safebooru """
-    try:
-        ctxtags1 = tags.replace(", ", "+")
-        ctxtags = ctxtags1.replace(" ", "_")
-        urlSafePre = "https://safebooru.org/index.php?page=dapi&s=post&q=index&tags=" + ctxtags + "rating:s"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(urlSafePre) as response:
-                html = await response.text()
-        soup = BeautifulSoup(html, 'html.parser')
-        file_urls = []
-        file_urls_length = 0
-        source = []
-        for post in soup.find_all('post'):
-            file_urls.append(post.get('file_url'))
-            file_urls_length += 1
-            source.append(post.get('id'))
-        the_url_num = random.randint(0, file_urls_length - 1)
-        the_url = file_urls[the_url_num]
-        await interaction.response.send_message(str(the_url) + f"\nTags recorded: `{ctxtags}`\nID: {source[the_url_num]} | Found `{file_urls_length - 1}` other entries.")
-        print(
-            f"Someone has searched for \"{tags}\"\nThis has resulted in the bot sending this link: [ {urlSafePre} ]")
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else:
+        try:
+            ctxtags1 = tags.replace(", ", "+")
+            ctxtags = ctxtags1.replace(" ", "_")
+            urlSafePre = "https://safebooru.org/index.php?page=dapi&s=post&q=index&tags=" + ctxtags + "rating:s"
+            async with aiohttp.ClientSession() as session:
+                async with session.get(urlSafePre) as response:
+                    html = await response.text()
+            soup = BeautifulSoup(html, 'html.parser')
+            file_urls = []
+            file_urls_length = 0
+            source = []
+            for post in soup.find_all('post'):
+                file_urls.append(post.get('file_url'))
+                file_urls_length += 1
+                source.append(post.get('id'))
+            the_url_num = random.randint(0, file_urls_length - 1)
+            the_url = file_urls[the_url_num]
+            await interaction.response.send_message(str(the_url) + f"\nTags recorded: `{ctxtags}`\nID: {source[the_url_num]} | Found `{file_urls_length - 1}` other entries.")
+            print(
+                f"Someone has searched for \"{tags}\"\nThis has resulted in the bot sending this link: [ {urlSafePre} ]")
 
-    except IndexError:
-        await interaction.response.send_message(f"No results found for {tags}.")
+        except IndexError:
+            await interaction.response.send_message(f"No results found for {tags}.")
 
 
 @client.tree.command(name="gelbooru")
 async def gel(interaction: discord.Interaction, tags: str, nsfw: Literal['safe', 'safe and questionable', 'questionable', 'explicit only', 'all'] = 'safe', gendered: Literal['Female Only', 'Male Only', 'Any'] = 'Any'):
     """ Get an image from Gelbooru (SFW only) """
-    urlSafePre = ""
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else:
+        urlSafePre = ""
 
-    try:
-        print(tags)
-        await interaction.response.defer()
-        ctxtags3 = tags.replace(", ", "+")
-        ctxtags2 = ctxtags3.replace(" ", "_")
-        print(ctxtags2)
-        if nsfw == 'safe':  # Safe only
-            urlSafePre = "https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=" + ctxtags2 + "+-transgender+-transgender_flag+-transgender_colors+-transsexual+-rating:questionable+-rating:explicit"
-        elif nsfw == 'safe and questionable':  # All except explicit
-            urlSafePre = "https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=" + ctxtags2 + "+-transgender+-transgender_flag+-transgender_colors+-transsexual+-rating:explicit"
-        elif nsfw == 'all':  # All
-            urlSafePre = "https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=" + ctxtags2 + "+-transgender+-transgender_flag+-transgender_colors+-transsexual"
-        elif nsfw == 'explicit only':  # Explicit only
-            urlSafePre = "https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=" + ctxtags2 + "+-transgender+-transgender_flag+-transgender_colors+-transsexual+rating:explicit"
-        elif nsfw == 'questionable':  # Questionable only
-            urlSafePre = "https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=" + ctxtags2 + "+-transgender+-transgender_flag+-transgender_colors+-transsexual+rating:questionable"
-        if gendered == 'Female Only':
-            urlSafePre += "+-1boy+-2boys+-3boys+-4boys+-5boys+-6%2bboys+-penis+-multiple_penises+-muscular_male+-male_focus+-multiple_boys+-futanari+-futa_only+-yaoi"
-        elif gendered == 'Male Only':
-            urlSafePre += "+-1girl+-2girls+-3girls+-4girls+-5girls+-6%2bgirls+-vagina+-futanari"
-        else:
-            pass
-        async with aiohttp.ClientSession() as session:
-            async with session.get(urlSafePre) as response:
-                html = await response.text()
-        soup = BeautifulSoup(html, 'html.parser')
-        gel_file_urls = []
-        gel_file_ratings = []
-        source = []
-        gel_file_urls_length = 0
-        for post in soup.find('posts').find_all('post'):
-            # if post.find('rating').get_text().strip().lower() == "general":
-            gel_file_urls.append(post.find('file_url').get_text())
-            gel_file_ratings.append(post.find('rating').get_text())
-            source.append(post.find('id').get_text())
-            gel_file_urls_length += 1
-        the_url_num = random.randint(0, gel_file_urls_length - 1)
-        the_url = gel_file_urls[the_url_num]
-        if gel_file_ratings[the_url_num] == 'explicit' or gel_file_ratings[the_url_num] == 'questionable':
-            await interaction.followup.send("|| " + str(the_url) + f" ||\nTags recorded: `{ctxtags2}`\nUser searched for: `{nsfw}`\nID: `{source[the_url_num]}`\nFound `{gel_file_urls_length - 1}` other entries.")
-        else:
-            await interaction.followup.send(str(the_url) + f"\nTags recorded: `{ctxtags2}`\nUser searched for: `{nsfw}`\nID: `{source[the_url_num]}`\nFound `{gel_file_urls_length - 1}` other entries.")
-        print(
-            f"Someone has searched for \"{tags}\"\nThis has resulted in the bot sending this link: [ {urlSafePre} ]\nThe ID of the post is `{source[the_url_num]}`\n"
-            f"This is the link sent: -# {the_url} #-")
-    except IndexError or discord.app_commands.errors.CommandInvokeError:
-        await interaction.followup.send(f"No results found for `{tags}`.")
-    except ValueError:
-        await interaction.followup.send(f"Something went wrong. Please check the spelling of each tag and try again.\nPlease check Gelbooru if it s down or if it shows results at all.\nTags used: `{tags.replace('+', ', ')}`")
+        try:
+            print(tags)
+            await interaction.response.defer()
+            ctxtags3 = tags.replace(", ", "+")
+            ctxtags2 = ctxtags3.replace(" ", "_")
+            print(ctxtags2)
+            if nsfw == 'safe':  # Safe only
+                urlSafePre = "https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=" + ctxtags2 + "+-transgender+-transgender_flag+-transgender_colors+-transsexual+-rating:questionable+-rating:explicit"
+            elif nsfw == 'safe and questionable':  # All except explicit
+                urlSafePre = "https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=" + ctxtags2 + "+-transgender+-transgender_flag+-transgender_colors+-transsexual+-rating:explicit"
+            elif nsfw == 'all':  # All
+                urlSafePre = "https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=" + ctxtags2 + "+-transgender+-transgender_flag+-transgender_colors+-transsexual"
+            elif nsfw == 'explicit only':  # Explicit only
+                urlSafePre = "https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=" + ctxtags2 + "+-transgender+-transgender_flag+-transgender_colors+-transsexual+rating:explicit"
+            elif nsfw == 'questionable':  # Questionable only
+                urlSafePre = "https://gelbooru.com/index.php?page=dapi&s=post&q=index&tags=" + ctxtags2 + "+-transgender+-transgender_flag+-transgender_colors+-transsexual+rating:questionable"
+            if gendered == 'Female Only':
+                urlSafePre += "+-1boy+-2boys+-3boys+-4boys+-5boys+-6%2bboys+-penis+-multiple_penises+-muscular_male+-male_focus+-multiple_boys+-futanari+-futa_only+-yaoi"
+            elif gendered == 'Male Only':
+                urlSafePre += "+-1girl+-2girls+-3girls+-4girls+-5girls+-6%2bgirls+-vagina+-futanari"
+            else:
+                pass
+            async with aiohttp.ClientSession() as session:
+                async with session.get(urlSafePre) as response:
+                    html = await response.text()
+            soup = BeautifulSoup(html, 'html.parser')
+            gel_file_urls = []
+            gel_file_ratings = []
+            source = []
+            gel_file_urls_length = 0
+            for post in soup.find('posts').find_all('post'):
+                # if post.find('rating').get_text().strip().lower() == "general":
+                gel_file_urls.append(post.find('file_url').get_text())
+                gel_file_ratings.append(post.find('rating').get_text())
+                source.append(post.find('id').get_text())
+                gel_file_urls_length += 1
+            the_url_num = random.randint(0, gel_file_urls_length - 1)
+            the_url = gel_file_urls[the_url_num]
+            if gel_file_ratings[the_url_num] == 'explicit' or gel_file_ratings[the_url_num] == 'questionable':
+                await interaction.followup.send("|| " + str(the_url) + f" ||\nTags recorded: `{ctxtags2}`\nUser searched for: `{nsfw}`\nID: `{source[the_url_num]}`\nFound `{gel_file_urls_length - 1}` other entries.")
+            else:
+                await interaction.followup.send(str(the_url) + f"\nTags recorded: `{ctxtags2}`\nUser searched for: `{nsfw}`\nID: `{source[the_url_num]}`\nFound `{gel_file_urls_length - 1}` other entries.")
+            print(
+                f"Someone has searched for \"{tags}\"\nThis has resulted in the bot sending this link: [ {urlSafePre} ]\nThe ID of the post is `{source[the_url_num]}`\n"
+                f"This is the link sent: -# {the_url} #-")
+        except IndexError or discord.app_commands.errors.CommandInvokeError:
+            await interaction.followup.send(f"No results found for `{tags}`.")
+        except ValueError:
+            await interaction.followup.send(f"Something went wrong. Please check the spelling of each tag and try again.\nPlease check Gelbooru if it s down or if it shows results at all.\nTags used: `{tags.replace('+', ', ')}`")
 
 
 
@@ -443,44 +607,52 @@ async def gel(interaction: discord.Interaction, tags: str, nsfw: Literal['safe',
 @client.tree.command(name="bleachbooru")
 async def bleach(interaction: discord.Interaction, tags: str, nsfw: Literal['safe', 'questionable and safe (high filter)', 'questionable and safe (low filter)', 'all', 'explicit only'] = 'safe'): # <-- This site sucks btw, horrid API, barely any documentation, not even filtered correctly. Be careful, even "safe" will often return porn.
     """ Get an image from Bleachbooru (Severe NSFW warning) """
-    urlSafePreBleach = ""
-    try:
-        print(tags)
-        await interaction.response.defer()
-        ctxtags6 = tags.replace(", ", "+")
-        ctxtags7 = ctxtags6.replace(" ", "_")
-        print(ctxtags7)
-        if nsfw == 'safe':  # Safe only
-            urlSafePreBleach = "https://bleachbooru.org/post.xml?limit=100?tags=" + ctxtags7 + "+-sex+-nipples+-penis+-vaginal_penetration+rating%3As"
-        elif nsfw == 'questionable and safe (high filter)':
-            urlSafePreBleach = "https://bleachbooru.org/post.xml?limit=100?tags=" + ctxtags7 + "+-sex+-nipples+-penis+-vaginal_penetration+-rating%3Aexplicit"
-        elif nsfw == 'questionable and safe (high filter)':
-            urlSafePreBleach = "https://bleachbooru.org/post.xml?limit=100?tags=" + ctxtags7 + "+-rating%3Aexplicit"
-        elif nsfw == 'all':
-            urlSafePreBleach = "https://bleachbooru.org/post.xml?limit=100?tags=" + ctxtags7
-        elif nsfw == 'explicit only':
-            urlSafePreBleach = "https://bleachbooru.org/post.xml?limit=100?tags=" + ctxtags7 + "+rating%3Aexplicit"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(urlSafePreBleach) as response:
-                html = await response.text()
-        soup = BeautifulSoup(html, 'html.parser')
-        bleach_file_urls = []
-        bleach_file_urls_length = 0
-        source = []
-        for post in soup.find('posts').find_all('post'):
-            bleach_file_urls.append(post.attrs["file_url"])
-            bleach_file_urls_length += 1
-            source.append(post.attrs["id"])
-        print("I arrived at line 363")
-        the_url_num = random.randint(0, bleach_file_urls_length - 1)
-        the_url = "https://bleachbooru.org" + bleach_file_urls[the_url_num]
-        await interaction.followup.send(the_url + f"\nTags recorded: `{tags}`\nUser searched for: `{nsfw}`  |  ID: `{source[the_url_num]}`\nFound {bleach_file_urls_length - 1} other entries (Max. 39 others).")
-        print("I arrived at line 367")
-        print(
-            f"Someone has searched for \"{tags}\"\nThis has resulted in the bot sending this link: [ {urlSafePreBleach} ]\nThe ID of the post is `{source[the_url_num]}`\n"
-            f"This is the link sent: -# {the_url} #-")
-    except IndexError or discord.app_commands.errors.CommandInvokeError:
-        await interaction.followup.send(f"No results found for `{tags}`.")
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else:
+        urlSafePreBleach = ""
+        try:
+            print(tags)
+            await interaction.response.defer()
+            ctxtags6 = tags.replace(", ", "+")
+            ctxtags7 = ctxtags6.replace(" ", "_")
+            print(ctxtags7)
+            if nsfw == 'safe':  # Safe only
+                urlSafePreBleach = "https://bleachbooru.org/post.xml?limit=100?tags=" + ctxtags7 + "+-sex+-nipples+-penis+-vaginal_penetration+rating%3As"
+            elif nsfw == 'questionable and safe (high filter)':
+                urlSafePreBleach = "https://bleachbooru.org/post.xml?limit=100?tags=" + ctxtags7 + "+-sex+-nipples+-penis+-vaginal_penetration+-rating%3Aexplicit"
+            elif nsfw == 'questionable and safe (high filter)':
+                urlSafePreBleach = "https://bleachbooru.org/post.xml?limit=100?tags=" + ctxtags7 + "+-rating%3Aexplicit"
+            elif nsfw == 'all':
+                urlSafePreBleach = "https://bleachbooru.org/post.xml?limit=100?tags=" + ctxtags7
+            elif nsfw == 'explicit only':
+                urlSafePreBleach = "https://bleachbooru.org/post.xml?limit=100?tags=" + ctxtags7 + "+rating%3Aexplicit"
+            async with aiohttp.ClientSession() as session:
+                async with session.get(urlSafePreBleach) as response:
+                    html = await response.text()
+            soup = BeautifulSoup(html, 'html.parser')
+            bleach_file_urls = []
+            bleach_file_urls_length = 0
+            source = []
+            for post in soup.find('posts').find_all('post'):
+                bleach_file_urls.append(post.attrs["file_url"])
+                bleach_file_urls_length += 1
+                source.append(post.attrs["id"])
+            print("I arrived at line 363")
+            the_url_num = random.randint(0, bleach_file_urls_length - 1)
+            the_url = "https://bleachbooru.org" + bleach_file_urls[the_url_num]
+            await interaction.followup.send(the_url + f"\nTags recorded: `{tags}`\nUser searched for: `{nsfw}`  |  ID: `{source[the_url_num]}`\nFound {bleach_file_urls_length - 1} other entries (Max. 39 others).")
+            print("I arrived at line 367")
+            print(
+                f"Someone has searched for \"{tags}\"\nThis has resulted in the bot sending this link: [ {urlSafePreBleach} ]\nThe ID of the post is `{source[the_url_num]}`\n"
+                f"This is the link sent: -# {the_url} #-")
+        except IndexError or discord.app_commands.errors.CommandInvokeError:
+            await interaction.followup.send(f"No results found for `{tags}`.")
 
 @client.tree.command(name="roll")
 @app_commands.describe(sides = "How many sides your dice should have")
@@ -488,32 +660,39 @@ async def bleach(interaction: discord.Interaction, tags: str, nsfw: Literal['saf
 @app_commands.describe(highlight_number = "Highlight the x-th roll (counts from 1 upwards)")
 async def roll(interaction: discord.Interaction, sides: int, rolls: int = 1, highlight_number: int = None):
     """ Roll a die """
-    #try:
-    result = []
-    response = ""
-    if sides <= 0:
-        await interaction.response.send_message("Please enter a positive, non-zero number when choosing sides.", ephemeral = True)
-    elif rolls <= 0:
-        await interaction.response.send_message("Please enter a positive, non-zero number when choosing how many rolls you want to make.", ephemeral = True)
-    elif sides >= sys.maxsize:
-        await interaction.response.send_message("Please enter a smaller number for how many sides your roll has.", ephemeral = True)
-    elif rolls >= sys.maxsize:
-        await interaction.response.send_message("Please enter a smaller number for how many roll you want to make.", ephemeral = True)
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
     else:
-        try:
-            for roll in range(rolls):
-                result.append(random.randint(1, sides))
-            response = f"Input: `{rolls}d{sides}`\nResult: " + ", ".join(map(str, result))
-            if highlight_number:
-                if highlight_number <= 0:
-                    await interaction.response.send_message("Please enter a positive, non-zero number when choosing the highlighted roll.", ephemeral = True)
-                if highlight_number >= rolls + 2:
-                    await interaction.response.send_message("Please ensure that the number you want to highlight is not higher than the number of rolls.", ephemeral = True)
-                else:
-                    response = response + f"\nHighlighted Roll: {result[highlight_number - 1]}"
-            await interaction.response.send_message(response)
-        except Exception as e:
-            await interaction.response.send_message(f"Error rolling die: {e}", ephemeral = True)
+        result = []
+        response = ""
+        if sides <= 0:
+            await interaction.response.send_message("Please enter a positive, non-zero number when choosing sides.", ephemeral = True)
+        elif rolls <= 0:
+            await interaction.response.send_message("Please enter a positive, non-zero number when choosing how many rolls you want to make.", ephemeral = True)
+        elif sides >= sys.maxsize:
+            await interaction.response.send_message("Please enter a smaller number for how many sides your roll has.", ephemeral = True)
+        elif rolls >= sys.maxsize:
+            await interaction.response.send_message("Please enter a smaller number for how many roll you want to make.", ephemeral = True)
+        else:
+            try:
+                for roll in range(rolls):
+                    result.append(random.randint(1, sides))
+                response = f"Input: `{rolls}d{sides}`\nResult: " + ", ".join(map(str, result))
+                if highlight_number:
+                    if highlight_number <= 0:
+                        await interaction.response.send_message("Please enter a positive, non-zero number when choosing the highlighted roll.", ephemeral = True)
+                    if highlight_number >= rolls + 2:
+                        await interaction.response.send_message("Please ensure that the number you want to highlight is not higher than the number of rolls.", ephemeral = True)
+                    else:
+                        response = response + f"\nHighlighted Roll: {result[highlight_number - 1]}"
+                await interaction.response.send_message(response)
+            except Exception as e:
+                await interaction.response.send_message(f"Error rolling die: {e}", ephemeral = True)
 
 
 list_ = [
@@ -1122,58 +1301,66 @@ async def embedtest(interaction : discord.Interaction):
 @client.tree.command(name="rr_play")
 async def rr_play(interaction : discord.Interaction):
     ''' Play a song from my private collection '''
-    await interaction.response.defer()
-    try:
-        channel = interaction.user.voice.channel
-        print("Arrived here 0.5")
-        if interaction.guild.voice_client == None:
-            await channel.connect(self_mute = False, self_deaf = True)
-        vc = interaction.guild.voice_client
-        if interaction.user.voice is None:
-            interaction.edit_original_response(content = 'Hey, doofus, you\'re not in a voice channel! Join one first and *ten* ask me to play something!')
-        print("Arrived here 0.75")
-        mp3 = random.choice(mp3_path)
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else:
+        await interaction.response.defer()
         try:
-            print("Arrived here 1")
-            audiofile = eyed3.load(mp3)
+            channel = interaction.user.voice.channel
+            print("Arrived here 0.5")
+            if interaction.guild.voice_client == None:
+                await channel.connect(self_mute = False, self_deaf = True)
+            vc = interaction.guild.voice_client
+            if interaction.user.voice is None:
+                interaction.edit_original_response(content = 'Hey, doofus, you\'re not in a voice channel! Join one first and *ten* ask me to play something!')
+            print("Arrived here 0.75")
+            mp3 = random.choice(mp3_path)
             try:
-                audTitle = audiofile.tag.title
-            except AttributeError:
-                audTitle = "Unknown Title"
-            try:
-                audArt = audiofile.tag.artist
-            except AttributeError:
-                audArt = "Unknown Artist"
-            try:
-                audAlbum = audiofile.tag.album
-            except AttributeError:
-                audAlbum = "Unknown Album"
+                print("Arrived here 1")
+                audiofile = eyed3.load(mp3)
+                try:
+                    audTitle = audiofile.tag.title
+                except AttributeError:
+                    audTitle = "Unknown Title"
+                try:
+                    audArt = audiofile.tag.artist
+                except AttributeError:
+                    audArt = "Unknown Artist"
+                try:
+                    audAlbum = audiofile.tag.album
+                except AttributeError:
+                    audAlbum = "Unknown Album"
 
-            process = await asyncio.create_subprocess_shell(
-                f'ffmpeg -i "{mp3}" -f s16le -ar 48000 -ac 2 pipe:1',
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
+                process = await asyncio.create_subprocess_shell(
+                    f'ffmpeg -i "{mp3}" -f s16le -ar 48000 -ac 2 pipe:1',
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
 
-            stdout, stderr = await process.communicate()
+                stdout, stderr = await process.communicate()
 
-            print("Arrived here 2")
-            print(mp3)
-            await interaction.edit_original_response(content = f"Song: {audTitle} | Artist: {audArt} | Album: {audAlbum}")
-            print("Arrived here 3")
-            
-            song = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(mp3))
-            
-            vc.play(song, after=lambda x: print("Done"))
+                print("Arrived here 2")
+                print(mp3)
+                await interaction.edit_original_response(content = f"Song: {audTitle} | Artist: {audArt} | Album: {audAlbum}")
+                print("Arrived here 3")
 
-            print(f"FFmpeg stderr: {stderr.decode()}")
+                song = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(mp3))
 
-        except discord.errors.HTTPException:
-            await interaction.edit_original_response(content = "File too large, try again.")
-        except PermissionError:
-            await interaction.edit_original_response(content = "Permission denied; Folder was probably auto-blocked, please try again.")
-    except OSError:
-        await interaction.edit_original_response(content = "An error occoured, please try again.")
+                vc.play(song, after=lambda x: print("Done"))
+
+                print(f"FFmpeg stderr: {stderr.decode()}")
+
+            except discord.errors.HTTPException:
+                await interaction.edit_original_response(content = "File too large, try again.")
+            except PermissionError:
+                await interaction.edit_original_response(content = "Permission denied; Folder was probably auto-blocked, please try again.")
+        except OSError:
+            await interaction.edit_original_response(content = "An error occoured, please try again.")
 
 
 
@@ -1208,15 +1395,15 @@ bot_info = (
 
 @client.tree.command(name="bug_report")
 async def bug_report(interaction : discord.Interaction, short_desc : str, steps_to_repeat : str, urgent : Literal['Yes', 'No'] = 'No'):
-    await interaction.response.defer()
-    with open("longterm_lists.yaml", "r") as file: # <-- EDIT this to your yaml. Read the Readme for more information.
-        data = yaml.safe_load(file)
-    if "blacklist" in data and data["blacklist"]:
-        blacklist = data["blacklist"]
-
-        if interaction.user.id in blacklist:
-            await interaction.followup.send("User blacklisted, command blocked.")
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id)  # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+    
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
     else:
+        await interaction.response.defer()
         embed = discord.Embed(title="Bug Report")
         embed.set_thumbnail(url="https://i.imgur.com/W7FtFry.png")
         embed.add_field(name="**Short Description**", value="**"+short_desc+"**", inline=False)
@@ -1234,80 +1421,110 @@ async def bug_report(interaction : discord.Interaction, short_desc : str, steps_
 
 
 @client.tree.command(name="blacklist_add")
-async def blacklist_add(interaction : discord.Interaction, user : str):
+async def blacklist_add(interaction: discord.Interaction, user_id: discord.Member, reason: str):
     ''' Bot Owner only command - Adds someone to blacklist using their UserID '''
     await interaction.response.defer()
-    user = int(user)
-    if interaction.user.id == 883054741263888384: # <-- EDIT this to your user ID
-
-        with open("longterm_lists.yaml", "r") as file: # <-- EDIT to your yaml. Read the Readme for more information.
-            data = yaml.safe_load(file)
-        if "blacklist" in data and data["blacklist"]:
-            blacklist = data["blacklist"]
-        else:
-            blacklist = []
-
-        blacklist.append(user)
-
-        data["blacklist"] = blacklist
-
-        with open("longterm_lists.yaml", "w") as file:
-            yaml.safe_dump(data, file)
-
-        await interaction.followup.send("Added!")
-    else:
-        await interaction.followup.send("Sorry, but you are not the owner, and as thus cannot add people to the blacklist.")
-
-
-@client.tree.command(name="blacklist")
-async def blacklist(interaction : discord.Interaction):
-    ''' Show the Blacklist '''
-    await interaction.response.defer()
-
-    with open("longterm_lists.yaml", "r") as file:
-        data = yaml.safe_load(file)
-
-    embed = discord.Embed(title="Blacklist")
-
-    if "blacklist" in data and data["blacklist"]:
-        blacklist = data["blacklist"]
-
-        i = 0
-        for _ in blacklist:
-            username = interaction.client.get_user(blacklist[i])
-            if username == "None":
-                embed.add_field(name=f"Username: {username}", value=f"User ID: {blacklist[i]}", inline=False)
-            else:
-                embed.add_field(name=f"Unknown Username", value=f"User ID: {blacklist[i]}", inline=False)
-            i += 1
-    else:
-        embed.add_field(name=f"Empty Blacklist", value="Looks like the blacklist is empty. Awesome!", inline=False)
+    user_id_str = str(user_id.id)
+    owner_id = 883054741263888384  # Replace with your user ID
     
-    await interaction.followup.send(embed=embed)
+    # Load the blacklist and whitelist data
+    data: dict
+    whitelist: list
+    blacklist: list
+    data = load_longterm_lists()
+    admins = data.get("true_natsukians", [])
+    whitelist = data.get("whitelist", [])
+    blacklist = data.get("blacklist", [])
+
+    if str(interaction.user.id) in admins:
+        # Check if whitelist exists and if the user is in it
+        if user_id_str in whitelist:
+            await interaction.followup.send("User is in the whitelist and cannot be added to the blacklist.")
+            return
+
+        if user_id.id == owner_id:
+            await interaction.followup.send("You cannot add the Owner to the blacklist. Nice try.")
+
+        if user_id.id == client.user.id:
+            await interaction.followup.send("You cannot add the Bot to the blacklist. Nice try.")
+
+        # Add to blacklist if not already present
+        if user_id_str not in blacklist:
+            blacklist.append({"uid": user_id_str, "reason": reason})
+            data["blacklist"] = blacklist
+            save_data(data)
+            await interaction.followup.send("Added to blacklist!")
+        else:
+            await interaction.followup.send("User is already in the blacklist.")
+    else:
+        await interaction.followup.send("You're not recognized as a Natsukian. You can't add people to the blacklist.")
+
+
+#@client.tree.command(name="blacklist")
+#async def blacklist(interaction : discord.Interaction):
+#    ''' Show the Blacklist '''
+#    await interaction.response.defer()
+#
+#    with open("longterm_lists.yaml", "r") as file:
+#        data = yaml.safe_load(file)
+#
+#    embed = discord.Embed(title="Blacklist")
+#
+#    if "blacklist" in data and data["blacklist"]:
+#        blacklist = data["blacklist"]
+#
+#        i = 0
+#        for _ in blacklist:
+#            username = interaction.client.get_user(blacklist[i])
+#            if username == "None":
+#                embed.add_field(name=f"Username: {username}", value=f"User ID: {blacklist[i]}", inline=False)
+#            else:
+#                embed.add_field(name=f"Unknown Username", value=f"User ID: {blacklist[i]}", inline=False)
+#            i += 1
+#    else:
+#        embed.add_field(name=f"Empty Blacklist", value="Looks like the blacklist is empty. Awesome!", inline=False)
+#    
+#    await interaction.followup.send(embed=embed)
 
 
 @client.tree.command(name="blacklist_remove")
-async def blacklist_remove(interaction : discord.Interaction, user : str):
-    ''' Bot Owner only command - Removes someone from blacklist '''
+async def blacklist_remove(interaction: discord.Interaction, user_id: discord.Member):
+    ''' Bot Owner only command - Removes someone from blacklist using their UserID '''
     await interaction.response.defer()
-    user = int(user)
-    if interaction.user.id == 883054741263888384: # <-- EDIT this to your user ID
+    user_id_str = str(user_id.id)
+    owner_id = 883054741263888384  # Replace with your user ID
 
-        with open("longterm_lists.yaml", "r") as file:
-            data = yaml.safe_load(file)
-        if "blacklist" in data and data["blacklist"]:
-            blacklist = data["blacklist"]
-            if user in blacklist:
-                blacklist.remove(user)
-                with open("longterm_lists.yaml", "w") as file:
-                    yaml.safe_dump(data, file)
-                await interaction.followup.send("Removed!")
-            else:
-                await interaction.followup.send(f"{user} does not exist in the Blacklist.")
+    # Load the blacklist and whitelist data
+    data: dict
+    whitelist: list
+    blacklist: list
+    data = load_longterm_lists()
+    admins = data.get("true_natsukians", [])
+    whitelist = data.get("whitelist", [])
+    blacklist = data.get("blacklist", [])
+
+    if str(interaction.user.id) in admins:
+        # Check if the user is in the whitelist
+        if user_id_str in whitelist:
+            await interaction.followup.send("User is in the whitelist and cannot be removed from the blacklist.")
+            return
+
+        # Check if the command issuer is the owner
+        if interaction.user.id != owner_id:
+            await interaction.followup.send("Sorry, but you are not the owner and cannot remove people from the blacklist.")
+            return
+
+        # Remove from blacklist if present
+        updated_blacklist = [entry for entry in blacklist if entry['uid'] != user_id_str]
+
+        if len(updated_blacklist) < len(blacklist):
+            data["blacklist"] = updated_blacklist
+            save_data(data)
+            await interaction.followup.send(f"Removed user {user_id_str} from the blacklist.")
         else:
-            blacklist = []
+            await interaction.followup.send("User not found in the blacklist.")
     else:
-        await interaction.followup.send("Sorry, but you are not the owner, and as thus cannot add people to the blacklist.")
+        await interaction.followup.send("You're not recognized as a Natsukian. You can't add people to the blacklist.")
         
 
 
