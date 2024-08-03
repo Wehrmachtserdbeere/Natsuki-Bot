@@ -41,7 +41,7 @@ __author__ = "Strawberry Software"
 __copyright__ = "Copyright 2019-2024"
 __credits__ = [ "Strawberry", "An old Friend of Strawberry's" ]
 __license__ = "MIT+NIGGER"
-__version__ = "2.3.0"
+__version__ = "2.3.1"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 
