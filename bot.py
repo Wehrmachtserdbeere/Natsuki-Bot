@@ -27,7 +27,7 @@ from typing import Optional, Literal
 from datetime import datetime
 import re
 from pathlib import Path
-import yt_dlp # Yes, trying to add music streaming
+import yt_dlp
 from datetime import date
 from importlib.metadata import version
 import logging
@@ -39,9 +39,13 @@ from datetime import timedelta
 
 __author__ = "Strawberry Software"
 __copyright__ = "Copyright 2019-2024"
-__credits__ = [ "Strawberry", "An old Friend of Strawberry's" ]
+__credits__ = [
+    "Strawberry",
+    "An old Friend of Strawberry's",
+    "italy2003 (https://www.pixiv.net/en/users/66835722)"
+    ]
 __license__ = "MIT+NIGGER"
-__version__ = "2.3.1"
+__version__ = "2.3.2"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 
@@ -1541,8 +1545,13 @@ async def on_ready():      # Check if it runs
             f'{num} - {guild.name} (id: {guild.id})'
         )
         num += 1
+    with open("./natsukis.json", encoding = "utf8") as file:
+        image_data = json.load(file)
+    image = random.choice(image_data["natsukis"])
+    print(f"Chose image <<{image["id"]}>>")
+    print(image_data["logo"])
+    print(f"{image["image"]}")
 
 print("Please wait a few seconds for the bot to connect")
 
 client.run(botToken)
-input("Just checking if it printed anything above.")
