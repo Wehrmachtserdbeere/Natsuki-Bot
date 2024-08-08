@@ -17,4 +17,3 @@ importlib.metadata
 logging
 requests
 subprocess
-pyyaml

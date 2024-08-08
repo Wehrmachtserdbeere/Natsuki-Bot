@@ -46,6 +46,7 @@ You will have to edit the bot, otherwise several commands will be bugged and not
 2. Follow the steps provided
 
 Alternatively you can comment out (or remove) commands you don't need/want. For documentation on DiscordPy, please head over to the [Official Discord.py Documentaton](https://discordpy.readthedocs.io/en/stable/api.html)
+
 ## Reporting Bugs
 
 If it is related to the bot itself, please search if your issue is solved or open, if not then please open an issue on GitHub.
@@ -59,6 +60,31 @@ Please refrain from contact me if you are planning to add your political, religi
 
 *If you decide to make a bot like that derived from this bot, I kindly request you to not use the Natsuki name or imagery with it.*
 
+## Images / ASCII Art
+
+When starting the bot, you may see ASCII image art. You can remove this by editing the `async def on_ready()` command, and removing `natsukis.json`.
+
+Similarly, you can add more art by following the JSON file format, and adding your own ASCII art. The JSON is stuctured as follows:
+
+| `"logo"` (This is just the logo. It has no additional properties apart from `"logo"`)
+
+| `"natsukis"` (This is an array of Objects - the images and their IDs.)
+
+| | Object (Because the objects do not have specific names, this stand-in name is used.)
+
+| | `"id"` (This is the **id**entifier property, which is useful for debugging in case a printed ASCII art is incorrectly displayed.)
+
+| | `"image"` (This is the property where the ASCII art is stored. To display the ASCII, this property is called.)
+
+An easy way to check ASCII art is to create a Python file that prints the ASCII, then opening the Python file inside Command Prompt.
+
+*Compatibility with the Linux Terminal is **not** guaranteed!*
+
+### Important: The ASCII art must **only** use UTF-8 characters!
+It will not work otherwise.
+
+If you wish to add your own ASCII art, open a suggestion issue, credit the original artist, and provide a screenshot of your console either running the bot, or a program to display the ASCII art.
+
 ## Music
 
 The Music function is kinda buggy and still worked on.
@@ -68,7 +94,11 @@ That means the queue messed up and will inevitably start playing the wrong songs
 Queue command is slightly bugged, sometimes not showing the correct songs, or showing the song that is currently playing. The skip command *should* work.
 Please be aware that this is a rudimentary solution to play YT stuff after all big bots removed the feature.
 
-If you use the music modules, beware that the bot cannot play things that are blocked in your country. From my brief testing, it can play age-restricted videos.
+If you use the music modules, beware that the bot cannot play things that are blocked in your country. From my brief testing, it can play age-restricted videos. You can possibly bypass it, should it not work, via regular YT-DLP options and a VPN as such:
+
+Create YouTube Account -> Create new file (JSON will be used in this example) -> Add it to .GITIGNORE (that way it won't leak information) -> Create a JSON file with the login credentials -> Modify the YT-DLP commands to log into the Account -> Turn on VPN -> Start Bot
+
+If you use a Server, you will have to run the Server with a VPN. This way, you bypass most country restrictions, and age restrictions (should they become an issue).
 
 ## Dev notes
 
