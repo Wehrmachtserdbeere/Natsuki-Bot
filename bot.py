@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import math
 import tkinter
 import aiohttp
 
@@ -41,11 +42,11 @@ __author__ = "Strawberry Software"
 __copyright__ = "Copyright 2019-2024"
 __credits__ = [
     "Strawberry",
-    "An old Friend of Strawberry's",
+    "Vim - An old Friend of Strawberry's",
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT+NIGGER"
-__version__ = "2.3.2"
+__version__ = "2.3.3"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 
@@ -757,6 +758,25 @@ def is_file_under_25mb(file_path):
     file_size = os.path.getsize(file_path)
     return file_size < max_size
 
+def get_video_resolution(video_path):
+    # Run FFprobe to get video stream info
+    result = subprocess.run(
+        ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", 
+         "stream=width,height", "-of", "csv=s=x:p=0", video_path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT
+    )
+
+    # Parse the result
+    resolution = result.stdout.decode('utf-8').strip()
+    width, height = map(int, resolution.split('x'))
+    
+    return width, height
+
+def video_is_divisible_by_2(video_path):
+    width, height = get_video_resolution(video_path)
+    return width % 2 == 0 and height % 2 == 0
+
 @client.event
 async def on_message(message):
     # Avoid responding to the bot's own messages
@@ -780,17 +800,35 @@ async def on_message(message):
             output_name = f"{file_name}.mp4"
             framerate = get_video_frame_rate(file_path)
 
-            command = [
-                "ffmpeg",
-                "-y",
-                "-fflags",
-                "+genpts",
-                "-i",
-                file_path,
-                "-r",
-                str(framerate),
-                output_name
-            ]
+            if video_is_divisible_by_2(file_path):
+                command = [
+                    "ffmpeg",
+                    "-y",
+                    "-fflags",
+                    "+genpts",
+                    "-i",
+                    file_path,
+                    "-r",
+                    str(framerate),
+                    output_name
+                ]
+            else:
+                width, height = get_video_resolution(file_path)
+                new_width = math.ceil(width / 2) * 2
+                new_height = math.ceil(height / 2) * 2
+                command = [
+                    "ffmpeg",
+                    "-y",
+                    "-fflags",
+                    "+genpts",
+                    "-i",
+                    file_path,
+                    "-vf",
+                    f"scale={new_width}:{new_height},pad={new_width}:{new_height}:(ow-iw)/2:(oh-ih)/2",
+                    "-r",
+                    str(framerate),
+                    output_name
+                ]
 
             try:
                 subprocess.run(command, check = True)
