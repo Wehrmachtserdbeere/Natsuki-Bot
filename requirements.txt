@@ -11,9 +11,8 @@ typing
 pathlib
 yt_dlp
 PyNaCl
-time
 datetime
 importlib.metadata
 logging
 requests
-subprocess
+defusedxml

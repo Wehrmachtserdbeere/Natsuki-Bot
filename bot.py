@@ -1,5 +1,9 @@
 # bot.py
 
+#
+# Note to self: DO NOT ADD COGS, they break EVERYTHING! It is NOT worth it, no matter what people say!
+#
+
 import asyncio
 import json
 import math
@@ -37,6 +41,7 @@ from datetime import timedelta
 import json
 import subprocess
 from datetime import timedelta
+import defusedxml.ElementTree as ET
 
 __author__ = "Strawberry Software"
 __copyright__ = "Copyright 2019-2024"
@@ -46,7 +51,7 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT+NIGGER"
-__version__ = "2.3.3"
+__version__ = "2.3.4"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/S8zDGPmXYv"
@@ -181,6 +186,14 @@ def check_user_in_blacklist(user_id, blacklist_data):
 def save_data(data, filename="./longterm_lists.json"):
     with open(filename, 'w') as file:
         json.dump(data, file, indent=4)
+
+# Check if owner
+def check_user_is_owner(user_id):
+    longterm_list = load_longterm_lists
+    for entry in longterm_list['true_natsukians']:
+        if entry == user_id:
+            return True
+    return False
 
 
 @client.tree.command(name="cute")                                                   # n!you_are_cute
@@ -503,13 +516,17 @@ async def megu(interaction: discord.Interaction):
         await interaction.response.send_message(file=discord.File(chanImg))
 
 
+
+
+
+
+
 @client.tree.command(name="safe")
 async def safe(interaction: discord.Interaction, tags: str):
     """ Get an image from Safebooru """
     blacklist_data = load_longterm_lists()
     user_id = str(interaction.user.id)  # Convert user ID to string
     result = check_user_in_blacklist(user_id, blacklist_data)
-    
     if result:
         uid, reason = result
         await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
@@ -534,7 +551,6 @@ async def safe(interaction: discord.Interaction, tags: str):
             await interaction.response.send_message(str(the_url) + f"\nTags recorded: `{ctxtags}`\nID: {source[the_url_num]} | Found `{file_urls_length - 1}` other entries.")
             print(
                 f"Someone has searched for \"{tags}\"\nThis has resulted in the bot sending this link: [ {urlSafePre} ]")
-
         except IndexError:
             await interaction.response.send_message(f"No results found for {tags}.")
 
@@ -545,13 +561,11 @@ async def gel(interaction: discord.Interaction, tags: str, nsfw: Literal['safe',
     blacklist_data = load_longterm_lists()
     user_id = str(interaction.user.id)  # Convert user ID to string
     result = check_user_in_blacklist(user_id, blacklist_data)
-    
     if result:
         uid, reason = result
         await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
     else:
         urlSafePre = ""
-
         try:
             print(tags)
             await interaction.response.defer()
@@ -603,10 +617,98 @@ async def gel(interaction: discord.Interaction, tags: str, nsfw: Literal['safe',
             await interaction.followup.send(f"Something went wrong. Please check the spelling of each tag and try again.\nPlease check Gelbooru if it s down or if it shows results at all.\nTags used: `{tags.replace('+', ', ')}`")
 
 
+@client.tree.command(name="rule34xxx")
+async def rule34xxx(interaction: discord.Interaction, tags: str, gendered: Literal['Female Only', 'Male Only', 'Any'] = 'Any', blacklists: Literal['Guro', 'Futa', 'Scat', 'Guro and Futa', 'Guro and Scat', 'Scat and Futa', 'Guro, Scat and Futa', 'None'] = 'Guro, Scat and Futa', allow_lolis: bool = True, allow_obesity: bool = False, allow_ai: bool = False, allow_3d: bool = False):
+    """
+    Get an image from rule34.xxx (NSFW very likely)\n
+    `tags` defines tags. Follow this format: `tag_1, tag_2, -banned_tag, *wild_card`
+    """
+    blacklist_data = load_longterm_lists()
+    user_id = str(interaction.user.id) # Convert user ID to string
+    result = check_user_in_blacklist(user_id, blacklist_data)
+
+    female_only = "+-1boy+-2boys+-3boys+-4boys+-5boys+-6%2bboys+-penis+-multiple_penises+-muscular_male+-male_focus+-multiple_boys+-yaoi"
+    male_only = "+-1girl+-2girls+-3girls+-4girls+-5girls+-6%2bgirls+-vagina"
+    guro = "+-guro+-gore+-death+-murder+-beaten+-decapitated_head+-decapitation+-female_death+-necrophilia+-ryona+-severed_head+-skullfuck+-skull_fucking+-snuff"
+    futa = "+-futa+-futadom+-dickgirl+-shemale+-newhalf+-gynomorph+-cuntboy+-hermaphrodite+-intersex+-futa_only"
+    scat = "+-scat+-shit+-scat_inflation+-poop+-pooping+-defecating+-shitting_self+-fart+-farting+-fart_cloud+-fart_fetish+-hyper_fart"
+    loli = "+-loli+-shota+-lolicon+-shotacon"
+    obesity = "+-huge_ass+-hyper_ass+-giant_ass+-gigantic_breasts+-enormous_breasts+-massive_breasts+-colossal_breasts+-astronomical_breasts+-obese+-fat+-fat_man+-fat_woman+-plump"
+    ai_tags = "+-ai_generated+-ai_*"
+    tags_3d = "+-3d+-3d_(artwork)+-3d_(gif)+-3d_(animation)+-3d_artwork+-3d_background+-3d_custom_girl"
+
+    if result:
+        uid, reason = result
+        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+    else:
+        pass
+    
+    #try:
+    print(tags)
+    await interaction.response.defer()
+    ctxtags3 = tags.replace(", ", "+")
+    ctxtags2 = ctxtags3.replace(" ", "_")
+    print(ctxtags2)
+    r34xxx_url_pre = 'https://api.rule34.xxx/index.php?page=dapi&s=post&q=index&tags=' + ctxtags2
+    
+    #Gender Tags
+    if gendered == 'Female Only':
+        r34xxx_url_pre = r34xxx_url_pre + female_only
+    elif gendered == 'Male Only':
+        r34xxx_url_pre = r34xxx_url_pre + male_only
+
+    # Disgusting Tags
+    if blacklists == 'Guro':
+        r34xxx_url_pre = r34xxx_url_pre + guro
+    elif blacklists == 'Futa':
+        r34xxx_url_pre = r34xxx_url_pre + futa
+    elif blacklists == 'Scat':
+        r34xxx_url_pre = r34xxx_url_pre + scat
+    elif blacklists == 'Guro and Futa':
+        r34xxx_url_pre = r34xxx_url_pre + guro + futa
+    elif blacklists == 'Guro and Scat':
+        r34xxx_url_pre = r34xxx_url_pre + guro + scat
+    elif blacklists == 'Scat and Futa':
+        r34xxx_url_pre = r34xxx_url_pre + scat + futa
+    elif blacklists == 'Guro, Scat and Futa':
+        r34xxx_url_pre = r34xxx_url_pre + guro + scat + futa
+    
+    # Other tags
+    if not allow_lolis:
+        r34xxx_url_pre = r34xxx_url_pre + loli
+    if not allow_obesity:
+        r34xxx_url_pre = r34xxx_url_pre + obesity
+    if not allow_ai:
+        r34xxx_url_pre = r34xxx_url_pre + ai_tags
+    if not allow_3d:
+        r34xxx_url_pre = r34xxx_url_pre + tags_3d
+    
+    async with aiohttp.ClientSession() as session:
+        async with session.get(r34xxx_url_pre) as response:
+            xml_data = await response.text()
+    
+    r34xxx_file_urls = []
+    source = []
+    r34xxx_file_urls_length = 0
+
+    root = ET.fromstring(xml_data)
+    for post in root.findall('post'):
+        r34xxx_file_urls.append(post.get('file_url'))
+        source.append(post.get('id'))
+        r34xxx_file_urls_length += 1
+
+    the_url_num = random.randint(0, r34xxx_file_urls_length - 1)
+    the_url = r34xxx_file_urls[the_url_num]
+    await interaction.followup.send(str(the_url) + f"\nTags recorded: `{ctxtags2}`\nID: `{source[the_url_num]}`\nFound `{r34xxx_file_urls_length - 1}` other entries.")
+    print(
+        f"Someone has searched for \"{tags}\"\nThis has resulted in the bot sending this link: [ {r34xxx_url_pre} ]\nThe ID of the post is `{source[the_url_num]}`\n"
+        f"This is the link sent: -# {the_url} #-")
 
 
-
-
+    #except IndexError or discord.app_commands.errors.CommandInvokeError:
+    #        await interaction.followup.send(f"No results found for `{tags}`.")
+    #except ValueError:
+    #    await interaction.followup.send(f"Something went wrong. Please check the spelling of each tag and try again.\nPlease check Rule34.xxx if it s down or if it shows results at all.\nTags used: `{tags.replace('+', ', ')}`")
 
 
 
@@ -617,7 +719,6 @@ async def bleach(interaction: discord.Interaction, tags: str, nsfw: Literal['saf
     blacklist_data = load_longterm_lists()
     user_id = str(interaction.user.id)  # Convert user ID to string
     result = check_user_in_blacklist(user_id, blacklist_data)
-    
     if result:
         uid, reason = result
         await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
@@ -660,6 +761,12 @@ async def bleach(interaction: discord.Interaction, tags: str, nsfw: Literal['saf
                 f"This is the link sent: -# {the_url} #-")
         except IndexError or discord.app_commands.errors.CommandInvokeError:
             await interaction.followup.send(f"No results found for `{tags}`.")
+
+
+
+
+
+
 
 @client.tree.command(name="roll")
 @app_commands.describe(sides = "How many sides your dice should have")
@@ -1530,7 +1637,6 @@ async def blacklist_remove(interaction: discord.Interaction, user_id: discord.Me
     ''' Bot Owner only command - Removes someone from blacklist using their UserID '''
     await interaction.response.defer()
     user_id_str = str(user_id.id)
-    owner_id = 883054741263888384  # Replace with your user ID
 
     # Load the blacklist and whitelist data
     data: dict
@@ -1548,7 +1654,7 @@ async def blacklist_remove(interaction: discord.Interaction, user_id: discord.Me
             return
 
         # Check if the command issuer is the owner
-        if interaction.user.id != owner_id:
+        if check_user_is_owner(interaction.user.id):
             await interaction.followup.send("Sorry, but you are not the owner and cannot remove people from the blacklist.")
             return
 
@@ -1582,7 +1688,7 @@ async def on_ready():      # Check if it runs
     with open("./natsukis.json", encoding = "utf8") as file:
         image_data = json.load(file)
     image = random.choice(image_data["natsukis"])
-    print(f"Chose image <<{image["id"]}>>")
+    print(f"Choose image <<{image["id"]}>>")
     print(image_data["logo"])
     print(f"{image["image"]}")
 
