@@ -49,8 +49,10 @@ __license__ = "MIT+NIGGER"
 __version__ = "2.3.3"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
-
 __support_discord__ = "https://discord.gg/S8zDGPmXYv"
+
+# In Megabytes (Keep under actual limit - a video with exactly 10 MB is rejected by Discord!)
+DISCORD_FILE_LIMIT = 9.8
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -737,237 +739,231 @@ async def on_message(message):
     if flag:
         await message.add_reaction('😭')
 
-DOWNLOAD_DIR = ".\\webm_downloads"
 
-def get_video_frame_rate(file_path):
-    command = ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=r_frame_rate", "-of", "json", file_path]
-    result = subprocess.run(command, capture_output=True, text=True)
+
+class WebmConverter(commands.Cog):
+    def __int__(self, bot):
+        self.bot = bot
+        self._last_member = None
+    DOWNLOAD_DIR = ".\\webm_downloads"
+    try:
+        channelID
+    except:
+        channelID = 123
+
+    ### Basic things, these will be called on an already running subprocess.to_thread() thread instead of the main thread
+    # Get the video framerate
+    async def get_video_frame_rate(file_path: str):
+        """
+        Extracts framerate as `int` from a video\n
+        `file_path` defines the path to the video as a `str`.\n
+        Returns `-1` on error
+        """
+        command = ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=r_frame_rate", "-of", "json", file_path]
+        result = subprocess.run(command, capture_output=True, text=True)
+
+        if result.returncode == 0:
+            data = json.loads(result.stdout)
+            frame_rate = data['streams'][0]['r_frame_rate']
+            numerator, denominator = frame_rate.split('/')
+            return int(numerator) / int(denominator)
+        else:
+            print(f"Error: Unable to get video frame rate. Return Code: {result.returncode}")
+            return -1
+
+    # Check if the video size is under the file limit as defined under DISCORD_FILE_LIMIT and returns a bool
+    def is_file_under_limit(file_path, file_limit = DISCORD_FILE_LIMIT):
+        """
+        Checks if the file is under the defined file limit and returns `bool`.\n
+        `file_limit` defines the file limit in megabytes as an `int`. By default slightly lower than the actual file limit, defined under `DISCORD_FILE_LIMIT`.
+        """
+        max_size = DISCORD_FILE_LIMIT * 1024 * 1024
+        file_size = os.path.getsize(file_path)
+        return file_size < max_size
+
+    def get_video_resolution(video_path):
+        """
+        Gets the video resolution and returns a touple `width, height`: `int, int`.\n
+        `video_path` defined the path to the video as a `str`.
+        """
+        # Run FFprobe to get video stream info
+        result = subprocess.run(
+            ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", 
+             "stream=width,height", "-of", "csv=s=x:p=0", video_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
+        )
+
+        # Parse the result
+        resolution = result.stdout.decode('utf-8').strip()
+        width, height = map(int, resolution.split('x'))
+
+        return width, height
+
+    def video_is_divisible_by_2(video_path):
+        """
+        Checks if the video width and height are divisible by 2 and returns a `bool`.\n
+        `video_path` defines the path to the video as a `str`.
+        """
+        width, height = WebmConverter.get_video_resolution(video_path)
+        return width % 2 == 0 and height % 2 == 0
+
+    async def download_attachment(attachment: discord.Attachment):
+        """
+        Downloads an attachment to the folder defined in `WebmConverter.DOWNLOAD_DIR` and returns `file_path` as `str`, and `None` in case of an error.\n
+        `attachment` is a `discord.Attachment`.
+        """
+        # Ensure the download directory exists
+        if not os.path.exists(WebmConverter.DOWNLOAD_DIR):
+            os.makedirs(WebmConverter.DOWNLOAD_DIR)
+
+        # Define the path where the file will be saved
+        file_path = os.path.join(WebmConverter.DOWNLOAD_DIR, attachment.filename)
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(attachment.url) as response:
+                if response.status == 200:
+                    with open(file_path, 'wb') as f:
+                        f.write(await response.read())
+                    print(f'Successfully downloaded {attachment.filename} to {file_path}')
+                    return file_path
+                else:
+                    print(f'Failed to download {attachment.filename}, status code: {response.status}')
+                    return None
+
+    async def check_for_webm_attachment(self, discord_message: discord.Message, channel_id: int, return_result: bool = False):
+        """
+        Takes a message and checks if there are any webm videos.\n
+        `message` is a `discord.Message`. Should be called after a `if message.attachments` check.\n
+        `return_result` (default: False) checks whether it should return webm videos as a `touple list` with each touple consisting of the `command` and a `video_file_path` pointing to the final video location, or if it should call `WebmConverter.Convert_Webm`.
+        """
+        webm_video_list = []
+        # Check for attachments in the message
+        for attachment in discord_message.attachments:
+            if attachment.filename.lower().endswith('.webm'):
+                print(f'Found a WebM attachment: {attachment.filename}')
+                # Download the WebM file
+                file_path = await WebmConverter.download_attachment(attachment) # Await to wait until it is finished. Necessary.
+                file_name, ext = os.path.splitext(file_path)
+                output_name = f"{file_name}.mp4"
+                framerate = await WebmConverter.get_video_frame_rate(file_path) # Await to wait until it is finished. Necessary.
+
+                if WebmConverter.video_is_divisible_by_2(file_path):
+                    command = [
+                        "ffmpeg",
+                        "-y",
+                        "-fflags",
+                        "+genpts",
+                        "-i",
+                        file_path,
+                        "-r",
+                        str(framerate),
+                        output_name
+                    ]
+                else:
+                    width, height = WebmConverter.get_video_resolution(file_path)
+                    new_width = math.ceil(width / 2) * 2
+                    new_height = math.ceil(height / 2) * 2
+                    command = [
+                        "ffmpeg",
+                        "-y",
+                        "-fflags",
+                        "+genpts",
+                        "-i",
+                        file_path,
+                        "-vf",
+                        f"scale={new_width}:{new_height},pad={new_width}:{new_height}:(ow-iw)/2:(oh-ih)/2",
+                        "-r",
+                        str(framerate),
+                        output_name
+                    ]
+                # Append the command and location as a touple to the webm_video_list
+                webm_video_list.append((command, output_name))
+        if return_result:
+            return webm_video_list
+        else:
+            ConvertWebms = WebmConverter()
+            await ConvertWebms.ConvertWebms(video_touple_list = webm_video_list, channel_id = channel_id)
+
+    async def ConvertWebms(self, video_touple_list: list, channel_id):
+        """
+        Converts all videos to mp4 with compression to fit under Discord's File Size Limit.
+        `video_touple_list` is a touple list structured as `(command, video_file_path)`.
+        """
+        interaction = discord.Interaction
+        # Ensure all items in the list are tuples
+        if all(isinstance(item, tuple) for item in video_touple_list):
+            # Prepare a list to store running tasks
+            conversion_tasks = []
+            
+            # Loop through all video command tuples
+            for i, (command, video_file_path) in enumerate(video_touple_list):
+                # Use asyncio's subprocess for non-blocking conversion
+                conversion_tasks.append(self.run_ffmpeg_command(command, video_file_path))
+
+            # Wait for all the conversions to finish
+            await asyncio.gather(*conversion_tasks)
+
+            channel_obj = client.get_channel(channel_id)
+
+            # Send the converted videos after all are processed
+            for _, video_file_path in video_touple_list:
+                # Make sure the file exists before sending
+                if os.path.exists(video_file_path):
+                    await channel_obj.send(file=discord.File(video_file_path))
+                else:
+                    print(f"Failed to locate converted file {video_file_path}")
+
+        else:
+            raise WebmConverter.WebmFailures.NotAToupleList(
+                "The parameter `video_touple_list` does not consist exclusively of tuples. "
+                "List consisting of tuples required."
+            )
+
+    async def run_ffmpeg_command(self, command, video_file_path):
+        """
+        Runs an individual ffmpeg command asynchronously.
+        `command` is the list of ffmpeg command arguments.
+        `video_file_path` is the output file path.
+        """
+
+        # Start the ffmpeg process
+        process = await asyncio.create_subprocess_exec(
+            *command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+
+        # Wait for the process to complete and capture stdout/stderr
+        stdout, stderr = await process.communicate()
+
+        if process.returncode == 0:
+            print(f"Successfully converted {video_file_path}")
+        else:
+            print(f"Failed to convert {video_file_path}. Error: {stderr.decode()}")
     
-    if result.returncode == 0:
-        data = json.loads(result.stdout)
-        frame_rate = data['streams'][0]['r_frame_rate']
-        numerator, denominator = frame_rate.split('/')
-        return int(numerator) / int(denominator)
-    else:
-        print("Error: Unable to get video frame rate.")
-        return None
+    class WebmFailures:
+        class NotAToupleList:
+            """
+            Generally raised if a touple list was expected but not received.
+            """
+            pass
 
-def is_file_under_25mb(file_path):
-    # 25MB in bytes
-    max_size = 25 * 1024 * 1024  # 25 * 1024 * 1024 = 26214400 bytes
-    file_size = os.path.getsize(file_path)
-    return file_size < max_size
-
-def get_video_resolution(video_path):
-    # Run FFprobe to get video stream info
-    result = subprocess.run(
-        ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", 
-         "stream=width,height", "-of", "csv=s=x:p=0", video_path],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT
-    )
-
-    # Parse the result
-    resolution = result.stdout.decode('utf-8').strip()
-    width, height = map(int, resolution.split('x'))
-    
-    return width, height
-
-def video_is_divisible_by_2(video_path):
-    width, height = get_video_resolution(video_path)
-    return width % 2 == 0 and height % 2 == 0
-
+# Check if attachment has webm video
 @client.event
-async def on_message(message):
+async def on_message(message: discord.Message):
     # Avoid responding to the bot's own messages
     if message.author == client.user:
         return
-
-    has_webm_flag = False
-    has_file_too_large = False
-    conversion_errors = []
-    attachment_list = []
-    files_list = []
-
-    # Check for attachments in the message
-    for attachment in message.attachments:
-        if attachment.filename.lower().endswith('.webm'):
-            has_webm_flag = True
-            print(f'Found a WebM attachment: {attachment.filename}')
-            # Download the WebM file
-            file_path = await download_attachment(attachment)
-            file_name, ext = os.path.splitext(file_path)
-            output_name = f"{file_name}.mp4"
-            framerate = get_video_frame_rate(file_path)
-
-            if video_is_divisible_by_2(file_path):
-                command = [
-                    "ffmpeg",
-                    "-y",
-                    "-fflags",
-                    "+genpts",
-                    "-i",
-                    file_path,
-                    "-r",
-                    str(framerate),
-                    output_name
-                ]
-            else:
-                width, height = get_video_resolution(file_path)
-                new_width = math.ceil(width / 2) * 2
-                new_height = math.ceil(height / 2) * 2
-                command = [
-                    "ffmpeg",
-                    "-y",
-                    "-fflags",
-                    "+genpts",
-                    "-i",
-                    file_path,
-                    "-vf",
-                    f"scale={new_width}:{new_height},pad={new_width}:{new_height}:(ow-iw)/2:(oh-ih)/2",
-                    "-r",
-                    str(framerate),
-                    output_name
-                ]
-
-            try:
-                subprocess.run(command, check = True)
-                os.remove(file_path) # Delete original file
-
-                files_list.append(output_name)
-                
-                if is_file_under_25mb(output_name):
-                    attachment_list.append(discord.File(fp = f"{output_name}", spoiler = attachment.is_spoiler()))
-                else:
-                    if not has_file_too_large:
-                        has_file_too_large = True
-                    conversion_errors.append(f"{output_name}")
-                    print(f"File too large: {output_name}")
-            except subprocess.CalledProcessError as e:
-                print(f"ERROR: {e}")
-
-    if has_webm_flag:
-        if not has_file_too_large:
-            await message.channel.send("Converted your webms!", files = attachment_list)
-            for _ in files_list:
-                os.remove(f"{_}")
-        elif has_file_too_large:
-            if attachment_list:
-                await message.channel.send(f"Converted your webms, but there were some problems. The following file(s) were too large to send: {conversion_errors}", files = attachment_list)
-                for _ in files_list:
-                    os.remove(f"{_}")
-            else:
-                await message.channel.send(f"No webms were converted, whatever you sent was too large. You still don't compare with Strawb :P\nThe following file(s) were too large: {conversion_errors}")
-        else:
-            await message.channel.send("Error")
-
-
-def download_video(url, download_folder):
-    if not os.path.exists(download_folder):
-        os.makedirs(download_folder)
     
-    # Extracting the filename from the URL to use as the file name
-    filename = url.split('/')[-1]
-    file_path = os.path.join(download_folder, filename)
-    
-    response = requests.get(url, stream=True)
-    if response.status_code == 200:
-        with open(file_path, 'wb') as file:
-            for chunk in response.iter_content(chunk_size=1024):
-                file.write(chunk)
-        print(f"Download of video completed: {file_path}")
-        return file_path
-    else:
-        print(f"Failed to retrieve video. Status code: {response.status_code}")
-        return None
+    # Check if it has *any* attachments
+    if message.attachments:
+        Converter = WebmConverter()
+        await Converter.check_for_webm_attachment(discord_message = message, channel_id = message.channel.id)
 
-@client.tree.command(name="convert_webm")
-async def convert_webm(interaction: discord.Interaction, video_url : str, silent : bool = False, format : Literal['mp4', 'gif'] = 'mp4'):
-    await interaction.response.defer(ephemeral = silent, thinking = True)
-    if video_url is None:
-        await interaction.edit_original_response("Please add a link to a video.")
-        return
-    
-    has_webm_flag = False
-    has_file_too_large = False
-    conversion_errors = []
-
-    if video_url is not None:
-        # Download the WebM file
-        file_path = download_video(video_url, os.path.abspath(os.getcwd()) + "\\webm_downloads")
-        has_webm_flag = True
-        file_name, ext = os.path.splitext(file_path)
-        framerate = get_video_frame_rate(file_path)
-
-        if format == "mp4":
-            output_name = f"{file_name}.mp4"
-            command = [
-                "ffmpeg",
-                "-y",
-                "-fflags",
-                "+genpts",
-                "-i",
-                file_path,
-                "-r",
-                str(framerate),
-                output_name
-            ]
-        elif format == "gif":
-            output_name = f"{file_name}.gif"
-            command = [
-                "ffmpeg",
-                "-y",  # Overwrite output files without asking
-                "-i", file_path,  # Input file path
-                "-r", str(framerate),  # Frame rate (frames per second) of the output GIF
-                "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2",  # Ensure width and height are divisible by 2 (required by GIF)
-                "-f", "gif",  # Output format is GIF
-                output_name  # Output file name
-            ]
-
-        try:
-            subprocess.run(command, check = True)
-            os.remove(file_path) # Delete original file
-
-            if is_file_under_25mb(output_name):
-                video_to_be_sent = discord.File(fp = f"{output_name}")
-            else:
-                if not has_file_too_large:
-                    has_file_too_large = True
-                conversion_errors.append(f"{output_name}")
-                print(f"File too large: {output_name}")
-        except subprocess.CalledProcessError as e:
-            print(f"ERROR: {e}")
-
-    if has_webm_flag:
-        if not has_file_too_large:
-            await interaction.followup.send("Converted your webms!", file = video_to_be_sent, ephemeral = silent)
-            os.remove(f"{output_name}")
-            print("Successfully converted video.")
-        elif has_file_too_large:
-            await interaction.edit_original_response(f"No webms were converted, whatever you sent was too large. You still don't compare with Strawb :P\nThe following file(s) were too large: {conversion_errors}")
-        else:
-            await interaction.edit_original_response("Error")
+        
 
 
-
-async def download_attachment(attachment):
-    # Ensure the download directory exists
-    if not os.path.exists(DOWNLOAD_DIR):
-        os.makedirs(DOWNLOAD_DIR)
-
-    # Define the path where the file will be saved
-    file_path = os.path.join(DOWNLOAD_DIR, attachment.filename)
-
-    async with aiohttp.ClientSession() as session:
-        async with session.get(attachment.url) as response:
-            if response.status == 200:
-                with open(file_path, 'wb') as f:
-                    f.write(await response.read())
-                print(f'Successfully downloaded {attachment.filename} to {file_path}')
-                return file_path
-            else:
-                print(f'Failed to download {attachment.filename}, status code: {response.status}')
-                return None
 
 @client.tree.command(name="doompilled")
 async def doom(interaction: discord.Interaction):
