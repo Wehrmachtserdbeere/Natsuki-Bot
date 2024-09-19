@@ -18,6 +18,8 @@
 
     `SODIUM_INSTALL=system pip install pynacl`
 
+    Please make sure to go into `settings.py` and change `is_phone` to `True`
+
 4. Using Command Prompt, go to the bot directory and run the following command:
 	
     `pip install -r requirements.txt`
