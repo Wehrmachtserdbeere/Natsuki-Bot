@@ -6,16 +6,27 @@
 2. Create and fill two files:
 - `botToken.py`
 - `longterm_lists.json`
-3. (Optional) Using Command Prompt, go to the bot directory and run the following command:
-	`$ pip install -r requirements.txt`
-	This should install the modules required to run the bot.
-4. Set up the environment (Guaranteed to work in Python 3.11.3)
-5. Edit the bot (More information below)
-6. Run the bot
+3. If you run this via termux, you **have** to run these commands in this order:
+    
+    `pkg install binutil`
+
+    `pkg install clang python libffi openssl libsodium`
+
+    `SODIUM_INSTALL=system pip install pynacl`
+
+4. Using Command Prompt, go to the bot directory and run the following command:
+	
+    `pip install -r requirements.txt`
+	
+    This should install the modules required to run the bot.
+    
+5. Set up the environment (Guaranteed to work in Python 3.11.3)
+6. Edit the bot (More information below)
+7. Run the bot
 
 **What you will put into each file:**
 `botToken.py`
-```python
+```py
 botToken = "your.bot.token"
 ```
 To get your Bot Token:

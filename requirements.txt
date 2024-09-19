@@ -1,8 +1,8 @@
 asyncio
 aiohttp
+pynacl
 discord
 eyed3
-functools
 ffmpeg
 discord.py
 datetime
@@ -10,7 +10,6 @@ bs4
 typing
 pathlib
 yt_dlp
-PyNaCl
 datetime
 importlib.metadata
 logging

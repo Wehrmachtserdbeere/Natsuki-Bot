@@ -55,7 +55,7 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT+NIGGER"
-__version__ = "2.3.5"
+__version__ = "2.3.6"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/S8zDGPmXYv"
@@ -1696,7 +1696,7 @@ async def on_ready():      # Check if it runs
     with open("./natsukis.json", encoding = "utf8") as file:
         image_data = json.load(file)
     image = random.choice(image_data["natsukis"])
-    print(f"Choose image <<{image["id"]}>>")
+    print(f"Choose image <<{{image["id"]}}>>")
     print(image_data["logo"])
     print(f"{image["image"]}")
 
