@@ -1,5 +1,9 @@
 # bot.py
 
+# Please set here if you're on a phone. This will disable commands that have paths.
+# If you set your own paths up, you can leave this as "False".
+is_phone = False
+
 #
 # Note to self: DO NOT ADD COGS, they break EVERYTHING! It is NOT worth it, no matter what people say!
 #
@@ -51,7 +55,7 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT+NIGGER"
-__version__ = "2.3.4"
+__version__ = "2.3.5"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/S8zDGPmXYv"
@@ -66,6 +70,10 @@ print("Bot Started at " + datetime.now().strftime("%H:%M:%S"))
 client = commands.Bot(command_prefix="n!", case_insensitive=True, intents=discord.Intents.all())
 
 mp3_path = list(Path("D:\\Alles\\Alle Musik und Videos\\RR\\").rglob("*.mp3")) # <-- EDIT this to whatever folder your music is in.
+folders = [
+    "D:\\Alles\\Alle Musik und Videos\\RR under 8MB\\", # <-- EDIT this to your RR music. Feel free to find meaning behind "RR".
+    ""
+]
 
 @client.command()
 @commands.guild_only()
@@ -217,36 +225,221 @@ async def ping(interaction: discord.Interaction) -> None:
     await interaction.response.send_message("Pong! `" + str(client.latency * 100) + "ms`")
 
 
-@client.tree.command(name="img")                                   # Natsuki image from "Natsuki Worship" <-- Oh wow this is an old comment! Has to be from 2019! Thank God I don't store my images on Discord anymore :P.
-async def img(interaction: discord.Interaction) -> None:
-    """ Send an image of Natsuki """
 
-    blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
+# These commands point to a local folder.
+if not is_phone:
+    @client.tree.command(name="img")                                   # Natsuki image from "Natsuki Worship" <-- Oh wow this is an old comment! Has to be from 2019! Thank God I don't store my images on Discord anymore :P.
+    async def img(interaction: discord.Interaction) -> None:
+        """ Send an image of Natsuki """
+
+        blacklist_data = load_longterm_lists()
+        user_id = str(interaction.user.id)  # Convert user ID to string
+        result = check_user_in_blacklist(user_id, blacklist_data)
+
+        if result:
+            uid, reason = result
+            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        else: 
+            imgimg = "D:\\Alles\\Alle Bilder\\DDLC\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\DDLC")) # <-- EDIT this to any path with images you like.
+            await interaction.response.send_message(file=discord.File(imgimg))
+
+
+    @client.tree.command(name="shdf")                                   # Get image <-- Can ignore unless you find a meaning behind "shdf".
+    async def shdf(interaction: discord.Interaction):
+        """ Send an SHDF image """
+
+        blacklist_data = load_longterm_lists()
+        user_id = str(interaction.user.id)  # Convert user ID to string
+        result = check_user_in_blacklist(user_id, blacklist_data)
+
+        if result:
+            uid, reason = result
+            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        else: 
+            shdfimg = "D:\\Alles\\Alle Bilder\\Anime People doing Wholesome Thing\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Anime People doing Wholesome Thing")) # <-- EDIT this to any path with images you like.
+            await interaction.response.send_message(file=discord.File(shdfimg))
     
-    if result:
-        uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
-    else: 
-        imgimg = "D:\\Alles\\Alle Bilder\\DDLC\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\DDLC")) # <-- EDIT this to any path with images you like.
-        await interaction.response.send_message(file=discord.File(imgimg))
-
-
-@client.tree.command(name="shdf")                                   # Get image <-- Can ignore unless you find a meaning behind "shdf".
-async def shdf(interaction: discord.Interaction):
-    """ Send an SHDF image """
-
-    blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
+    @client.tree.command(name="fate")                           # Fate image
+    async def fate(interaction: discord.Interaction):
+        """ Get an image of the anime \"Fate\" """
+        blacklist_data = load_longterm_lists()
+        user_id = str(interaction.user.id)  # Convert user ID to string
+        result = check_user_in_blacklist(user_id, blacklist_data)
+        
+        if result:
+            uid, reason = result
+            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        else:
+            fateimg = "D:Alles\\Alle Bilder\\Fate\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Fate")) # <-- EDIT this if you have a folder for Fate images.
+            await interaction.response.send_message(file=discord.File(fateimg))
     
-    if result:
-        uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
-    else: 
-        shdfimg = "D:\\Alles\\Alle Bilder\\Anime People doing Wholesome Thing\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Anime People doing Wholesome Thing")) # <-- EDIT this to any path with images you like.
-        await interaction.response.send_message(file=discord.File(shdfimg))
+    
+    @client.tree.command(name="tanya")                           # Tanya image from
+    async def tanya(interaction: discord.Interaction):
+        """ Get an image of Tanya von Degurechaff """
+        blacklist_data = load_longterm_lists()
+        user_id = str(interaction.user.id)  # Convert user ID to string
+        result = check_user_in_blacklist(user_id, blacklist_data)
+        
+        if result:
+            uid, reason = result
+            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        else:
+            tanyaimg = "D:\\Alles\\Alle Bilder\\Tanya Degurechaff\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Tanya Degurechaff")) # <-- EDIT this if you have a folder for images of anything called "tanya".
+            await interaction.response.send_message(file=discord.File(tanyaimg))
+
+
+    @client.tree.command(name="tomboy")                                   # Get image
+    async def tomboy(interaction: discord.Interaction):
+        """Mmm tomboy abs yummy licky """
+        blacklist_data = load_longterm_lists()
+        user_id = str(interaction.user.id)  # Convert user ID to string
+        result = check_user_in_blacklist(user_id, blacklist_data)
+
+        if result:
+            uid, reason = result
+            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        else:
+            tomboyimg = "D:\\Alles\\Alle Bilder\\Anime Tomboys\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Anime Tomboys")) # <-- EDIT this to your Anime Tomboys folder. I know you have one.
+            await interaction.response.send_message(file=discord.File(tomboyimg))
+
+
+    @client.tree.command(name="rem")
+    async def rem(interaction: discord.Interaction):
+        """ Get an image of Rem """
+        blacklist_data = load_longterm_lists()
+        user_id = str(interaction.user.id)  # Convert user ID to string
+        result = check_user_in_blacklist(user_id, blacklist_data)
+
+        if result:
+            uid, reason = result
+            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        else:
+            remimg = "D:\\Alles\\Alle Bilder\\Rem\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Rem\\")) # <-- EDIT this to images of Rem.
+            await interaction.response.send_message(file=discord.File(remimg))
+
+
+    @client.tree.command(name="klk")
+    async def klk(interaction: discord.Interaction):
+        """ Get an image of Kill la Kill """
+        blacklist_data = load_longterm_lists()
+        user_id = str(interaction.user.id)  # Convert user ID to string
+        result = check_user_in_blacklist(user_id, blacklist_data)
+
+        if result:
+            uid, reason = result
+            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        else:
+            klkimg = "D:\\Alles\\Alle Bilder\\Kill la Kill\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Kill la Kill\\")) # <-- EDIT this to Kill La Kill images.
+            await interaction.response.send_message(file=discord.File(klkimg))
+
+
+    @client.tree.command(name="rmeme")
+    async def rmeme(interaction: discord.Interaction):
+        """ Get one of Strawb's memes """
+        blacklist_data = load_longterm_lists()
+        user_id = str(interaction.user.id)  # Convert user ID to string
+        result = check_user_in_blacklist(user_id, blacklist_data)
+
+        if result:
+            uid, reason = result
+            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        else:
+            await interaction.response.defer()
+            try:
+                mp4 = "D:\\Alles\\Alle Musik und Videos\\" + random.choice(os.listdir("D:\\Alles\\Alle Musik und Videos\\")) # <-- EDIT this to a path with video memes.
+                await interaction.followup.send(file=discord.File(mp4))
+            except discord.errors.HTTPException:
+                await interaction.followup.send("File too large, try again.")
+            except PermissionError:
+                await interaction.followup.send("Permission denied; Folder was auto-blocked, please try again.")
+    
+
+    @client.tree.command(name="rr")
+    async def rr(interaction: discord.Interaction):
+        """ Get a NS song (Most likely German) """
+        blacklist_data = load_longterm_lists()
+        user_id = str(interaction.user.id)  # Convert user ID to string
+        result = check_user_in_blacklist(user_id, blacklist_data)
+
+        if result:
+            uid, reason = result
+            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        else:
+            await interaction.response.defer()
+            try:
+                #mp3 = "D:\\Alles\\Alle Musik und Videos\\RR under 8MB\\" + random.choice(os.listdir("D:\\Alles\\Alle Musik und Videos\\RR under 8MB\\"))
+                mp3 = random.choice(mp3_path)
+                #print(f'RR Requested | Song: {mp3}')
+                try:
+                    audiofile = eyed3.load(mp3)
+                    try:
+                        audTitle = audiofile.tag.title
+                    except AttributeError:
+                        audTitle = "Unknown Title"
+                    try:
+                        audArt = audiofile.tag.artist
+                    except AttributeError:
+                        audArt = "Unknown Artist"
+                    try:
+                        audAlbum = audiofile.tag.album
+                    except AttributeError:
+                        audAlbum = "Unknown Album"
+                    await interaction.followup.send(f"Song: {audTitle} | Artist: {audArt} | Album: {audAlbum}", file=discord.File(mp3))
+                    #await interaction.followup.send(f"Song: {audTitle} | Artist: {audArt} | Album: {audAlbum}")
+                    print(f"RR music -- {mp3}")
+                except discord.errors.HTTPException:
+                    await interaction.followup.send("File too large, try again.")
+                except PermissionError:
+                    await interaction.followup.send("Permission denied; Folder was probably auto-blocked because of lewdness, please try again.")
+            except OSError:
+                await interaction.followup.send("An error occoured, please try again.")
+
+
+    @client.tree.command(name="christ_chan")
+    async def christ_chan(interaction: discord.Interaction):
+        """ Get an image of Christ-Chan """
+        blacklist_data = load_longterm_lists()
+        user_id = str(interaction.user.id)  # Convert user ID to string
+        result = check_user_in_blacklist(user_id, blacklist_data)
+
+        if result:
+            uid, reason = result
+            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        else:
+            chrImg = "D:\\Alles\\Alle Bilder\\Christ-chan\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Christ-chan\\")) # <-- EDIT this to a path with images of Christ Chan. Not to be confused with Chris Chan.
+            await interaction.response.send_message(file=discord.File(chrImg))
+
+
+    @client.tree.command(name="chan")
+    async def chan(interaction: discord.Interaction):
+        """ Get an image of another Chan """
+        blacklist_data = load_longterm_lists()
+        user_id = str(interaction.user.id)  # Convert user ID to string
+        result = check_user_in_blacklist(user_id, blacklist_data)
+
+        if result:
+            uid, reason = result
+            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        else:
+            chanImg = "D:\\Alles\\Alle Bilder\\Other Chans\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Other Chans\\")) # <-- EDIT this to a path with images of other -chan characters.
+            await interaction.response.send_message(file=discord.File(chanImg))
+
+
+    @client.tree.command(name="megu")
+    async def megu(interaction: discord.Interaction):
+        """ Get an image of Megumin """
+        blacklist_data = load_longterm_lists()
+        user_id = str(interaction.user.id)  # Convert user ID to string
+        result = check_user_in_blacklist(user_id, blacklist_data)
+
+        if result:
+            uid, reason = result
+            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        else:
+            chanImg = "D:\\Alles\\Alle Bilder\\Megumin\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Megumin\\")) # <-- EDIT this to a path with Megumin images.
+            await interaction.response.send_message(file=discord.File(chanImg))
+
 
 B = ":black_large_square:"
 b = B
@@ -316,51 +509,6 @@ async def oracle_ger(interaction: discord.Interaction, amount_de: int):
         await interaction.response.send_message(functools.reduce(lambda line, word: line + f"{word} ", (random.choice(oracle_de_words) for _ in range(amount_de)), str()))
 
 
-@client.tree.command(name="fate")                           # Fate image
-async def fate(interaction: discord.Interaction):
-    """ Get an image of the anime \"Fate\" """
-    blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
-    
-    if result:
-        uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
-    else:
-        fateimg = "D:Alles\\Alle Bilder\\Fate\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Fate")) # <-- EDIT this if you have a folder for Fate images.
-        await interaction.response.send_message(file=discord.File(fateimg))
-
-
-@client.tree.command(name="tanya")                           # Tanya image from
-async def tanya(interaction: discord.Interaction):
-    """ Get an image of Tanya von Degurechaff """
-    blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
-    
-    if result:
-        uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
-    else:
-        tanyaimg = "D:\\Alles\\Alle Bilder\\Tanya Degurechaff\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Tanya Degurechaff")) # <-- EDIT this if you have a folder for images of anything called "tanya".
-        await interaction.response.send_message(file=discord.File(tanyaimg))
-
-
-@client.tree.command(name="tomboy")                                   # Get image
-async def tomboy(interaction: discord.Interaction):
-    """Mmm tomboy abs yummy licky """
-    blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
-    
-    if result:
-        uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
-    else:
-        tomboyimg = "D:\\Alles\\Alle Bilder\\Anime Tomboys\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Anime Tomboys")) # <-- EDIT this to your Anime Tomboys folder. I know you have one.
-        await interaction.response.send_message(file=discord.File(tomboyimg))
-
-
 @client.tree.command(name="fap")
 async def fap(interaction: discord.Interaction):
     """ Send this if someone mentions porn """
@@ -374,154 +522,9 @@ async def fap(interaction: discord.Interaction):
     )
 
 
-@client.tree.command(name="rem")
-async def rem(interaction: discord.Interaction):
-    """ Get an image of Rem """
-    blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
-    
-    if result:
-        uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
-    else:
-        remimg = "D:\\Alles\\Alle Bilder\\Rem\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Rem\\")) # <-- EDIT this to images of Rem.
-        await interaction.response.send_message(file=discord.File(remimg))
-
-
-@client.tree.command(name="klk")
-async def klk(interaction: discord.Interaction):
-    """ Get an image of Kill la Kill """
-    blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
-    
-    if result:
-        uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
-    else:
-        klkimg = "D:\\Alles\\Alle Bilder\\Kill la Kill\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Kill la Kill\\")) # <-- EDIT this to Kill La Kill images.
-        await interaction.response.send_message(file=discord.File(klkimg))
-
-
-@client.tree.command(name="rmeme")
-async def rmeme(interaction: discord.Interaction):
-    """ Get one of Strawb's memes """
-    blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
-    
-    if result:
-        uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
-    else:
-        await interaction.response.defer()
-        try:
-            mp4 = "D:\\Alles\\Alle Musik und Videos\\" + random.choice(os.listdir("D:\\Alles\\Alle Musik und Videos\\")) # <-- EDIT this to a path with video memes.
-            await interaction.followup.send(file=discord.File(mp4))
-        except discord.errors.HTTPException:
-            await interaction.followup.send("File too large, try again.")
-        except PermissionError:
-            await interaction.followup.send("Permission denied; Folder was auto-blocked, please try again.")
-
-
-folders = [
-    "D:\\Alles\\Alle Musik und Videos\\RR under 8MB\\", # <-- EDIT this to your RR music. Feel free to find meaning behind "RR".
-    ""
-]
-
-@client.tree.command(name="rr")
-async def rr(interaction: discord.Interaction):
-    """ Get a NS song (Most likely German) """
-    blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
-    
-    if result:
-        uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
-    else:
-        await interaction.response.defer()
-        try:
-            #mp3 = "D:\\Alles\\Alle Musik und Videos\\RR under 8MB\\" + random.choice(os.listdir("D:\\Alles\\Alle Musik und Videos\\RR under 8MB\\"))
-            mp3 = random.choice(mp3_path)
-            #print(f'RR Requested | Song: {mp3}')
-            try:
-                audiofile = eyed3.load(mp3)
-                try:
-                    audTitle = audiofile.tag.title
-                except AttributeError:
-                    audTitle = "Unknown Title"
-                try:
-                    audArt = audiofile.tag.artist
-                except AttributeError:
-                    audArt = "Unknown Artist"
-                try:
-                    audAlbum = audiofile.tag.album
-                except AttributeError:
-                    audAlbum = "Unknown Album"
-                await interaction.followup.send(f"Song: {audTitle} | Artist: {audArt} | Album: {audAlbum}", file=discord.File(mp3))
-                #await interaction.followup.send(f"Song: {audTitle} | Artist: {audArt} | Album: {audAlbum}")
-                print(f"RR music -- {mp3}")
-            except discord.errors.HTTPException:
-                await interaction.followup.send("File too large, try again.")
-            except PermissionError:
-                await interaction.followup.send("Permission denied; Folder was probably auto-blocked because of lewdness, please try again.")
-        except OSError:
-            await interaction.followup.send("An error occoured, please try again.")
-
-
-@client.tree.command(name="christ_chan")
-async def christ_chan(interaction: discord.Interaction):
-    """ Get an image of Christ-Chan """
-    blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
-    
-    if result:
-        uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
-    else:
-        chrImg = "D:\\Alles\\Alle Bilder\\Christ-chan\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Christ-chan\\")) # <-- EDIT this to a path with images of Christ Chan. Not to be confused with Chris Chan.
-        await interaction.response.send_message(file=discord.File(chrImg))
-
-
-@client.tree.command(name="chan")
-async def chan(interaction: discord.Interaction):
-    """ Get an image of another Chan """
-    blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
-    
-    if result:
-        uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
-    else:
-        chanImg = "D:\\Alles\\Alle Bilder\\Other Chans\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Other Chans\\")) # <-- EDIT this to a path with images of other -chan characters.
-        await interaction.response.send_message(file=discord.File(chanImg))
-
-
-@client.tree.command(name="megu")
-async def megu(interaction: discord.Interaction):
-    """ Get an image of Megumin """
-    blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
-    
-    if result:
-        uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
-    else:
-        chanImg = "D:\\Alles\\Alle Bilder\\Megumin\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Megumin\\")) # <-- EDIT this to a path with Megumin images.
-        await interaction.response.send_message(file=discord.File(chanImg))
-
-
-
-
-
-
 
 @client.tree.command(name="safe")
+@app_commands.describe(tags = "Enter tags in a `tag 1, tag 2 (series name), -banned tag, *wildcard` format")
 async def safe(interaction: discord.Interaction, tags: str):
     """ Get an image from Safebooru """
     blacklist_data = load_longterm_lists()
@@ -556,6 +559,9 @@ async def safe(interaction: discord.Interaction, tags: str):
 
 
 @client.tree.command(name="gelbooru")
+@app_commands.describe(tags = "Enter tags in a `tag 1, tag 2 (series name), -banned tag, *wildcard` format")
+@app_commands.describe(nsfw = "Filter ratings. Default: `Safe`")
+@app_commands.describe(gendered = "Filter `Female Only`, `Male Only`, or `Any` images. Default: `Any`")
 async def gel(interaction: discord.Interaction, tags: str, nsfw: Literal['safe', 'safe and questionable', 'questionable', 'explicit only', 'all'] = 'safe', gendered: Literal['Female Only', 'Male Only', 'Any'] = 'Any'):
     """ Get an image from Gelbooru (SFW only) """
     blacklist_data = load_longterm_lists()
@@ -618,6 +624,11 @@ async def gel(interaction: discord.Interaction, tags: str, nsfw: Literal['safe',
 
 
 @client.tree.command(name="rule34xxx")
+@app_commands.describe(tags = "Enter tags in a `tag 1, tag 2 (series name), -banned tag, *wildcard` format")
+@app_commands.describe(gendered = "Filter `Female Only`, `Male Only`, or `Any` images. Default: `Any`")
+@app_commands.describe(blacklists = "Preset Blacklists for various tags considered NSFL or disgusing. Default: Use All Presets")
+@app_commands.describe(allow_ai = "Dis/Allow images generated by AI. Default: `False`")
+@app_commands.describe(allow_3d = "Dis/Allow '3d' images. Default: `False`")
 async def rule34xxx(interaction: discord.Interaction, tags: str, gendered: Literal['Female Only', 'Male Only', 'Any'] = 'Any', blacklists: Literal['Guro', 'Futa', 'Scat', 'Guro and Futa', 'Guro and Scat', 'Scat and Futa', 'Guro, Scat and Futa', 'None'] = 'Guro, Scat and Futa', allow_lolis: bool = True, allow_obesity: bool = False, allow_ai: bool = False, allow_3d: bool = False):
     """
     Get an image from rule34.xxx (NSFW very likely)\n
@@ -711,9 +722,9 @@ async def rule34xxx(interaction: discord.Interaction, tags: str, gendered: Liter
     #    await interaction.followup.send(f"Something went wrong. Please check the spelling of each tag and try again.\nPlease check Rule34.xxx if it s down or if it shows results at all.\nTags used: `{tags.replace('+', ', ')}`")
 
 
-
-
 @client.tree.command(name="bleachbooru")
+@app_commands.describe(tags = "Enter tags in a `tag 1, tag 2 (series name), -banned tag, *wildcard` format")
+@app_commands.describe(nsfw = "Filter ratings. Default: `Safe`. **WARNING** Even `Safe` will often result in NSFW artwork! Fault: Website Moderation.")
 async def bleach(interaction: discord.Interaction, tags: str, nsfw: Literal['safe', 'questionable and safe (high filter)', 'questionable and safe (low filter)', 'all', 'explicit only'] = 'safe'): # <-- This site sucks btw, horrid API, barely any documentation, not even filtered correctly. Be careful, even "safe" will often return porn.
     """ Get an image from Bleachbooru (Severe NSFW warning) """
     blacklist_data = load_longterm_lists()
@@ -761,9 +772,6 @@ async def bleach(interaction: discord.Interaction, tags: str, nsfw: Literal['saf
                 f"This is the link sent: -# {the_url} #-")
         except IndexError or discord.app_commands.errors.CommandInvokeError:
             await interaction.followup.send(f"No results found for `{tags}`.")
-
-
-
 
 
 
