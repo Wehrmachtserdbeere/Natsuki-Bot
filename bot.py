@@ -1697,9 +1697,10 @@ async def on_ready():      # Check if it runs
         image_data = json.load(file)
     image = random.choice(image_data["natsukis"])
     image_id = image["id"]
+    image_ascii = image["image"]
     print(f"Choose image <<{image_id}>>")
     print(image_data["logo"])
-    print(f"{image["image"]}")
+    print(f"{image_ascii}")
 
 print("Please wait a few seconds for the bot to connect")
 
