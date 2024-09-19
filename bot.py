@@ -1,9 +1,5 @@
 # bot.py
 
-# Please set here if you're on a phone. This will disable commands that have paths.
-# If you set your own paths up, you can leave this as "False".
-is_phone = False
-
 #
 # Note to self: DO NOT ADD COGS, they break EVERYTHING! It is NOT worth it, no matter what people say!
 #
@@ -46,6 +42,7 @@ import json
 import subprocess
 from datetime import timedelta
 import defusedxml.ElementTree as ET
+import settings
 
 __author__ = "Strawberry Software"
 __copyright__ = "Copyright 2019-2024"
@@ -62,6 +59,8 @@ __support_discord__ = "https://discord.gg/S8zDGPmXYv"
 
 # In Megabytes (Keep under actual limit - a video with exactly 10 MB is rejected by Discord!)
 DISCORD_FILE_LIMIT = 9.8
+
+is_phone = settings.is_phone
 
 logging.basicConfig(level=logging.DEBUG)
 
