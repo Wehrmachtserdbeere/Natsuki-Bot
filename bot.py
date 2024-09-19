@@ -862,7 +862,7 @@ class WebmConverter(commands.Cog):
         self._last_member = None
     DOWNLOAD_DIR = ".\\webm_downloads"
     try:
-        channelID
+        channelID # type: ignore
     except:
         channelID = 123
 

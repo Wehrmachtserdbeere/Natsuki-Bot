@@ -8,7 +8,11 @@
 - `longterm_lists.json`
 3. If you run this via termux, you **have** to run these commands in this order:
     
+    `pkg install python pip`
+
     `pkg install binutil`
+
+    `pkg install python-tkinter`
 
     `pkg install clang python libffi openssl libsodium`
 
@@ -19,7 +23,7 @@
     `pip install -r requirements.txt`
 	
     This should install the modules required to run the bot.
-    
+
 5. Set up the environment (Guaranteed to work in Python 3.11.3)
 6. Edit the bot (More information below)
 7. Run the bot
