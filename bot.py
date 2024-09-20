@@ -1689,7 +1689,7 @@ async def blacklist_remove(interaction: discord.Interaction, user_id: discord.Me
 #
 async def print_latency(client):
     while True:
-        print(f"{(client.latency * 100):.3f}")
+        print(f"Current ping: {(client.latency * 100):.3f}")
         await asyncio.sleep(ping_delay)
 
 
@@ -1726,4 +1726,7 @@ async def on_ready():      # Check if it runs
 
 print("Please wait a few seconds for the bot to connect")
 
-client.run(botToken)
+if is_debugging:
+    client.run(botToken)
+else:
+    client.run(botToken, log_handler=None)
