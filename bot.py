@@ -51,20 +51,27 @@ __credits__ = [
     "Vim - An old Friend of Strawberry's",
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
-__license__ = "MIT+NIGGER"
-__version__ = "2.3.6"
+__license__ = "MIT"
+__version__ = "2.3.7"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/S8zDGPmXYv"
 
-# In Megabytes (Keep under actual limit - a video with exactly 10 MB is rejected by Discord!)
-DISCORD_FILE_LIMIT = 9.8
-
+# Settings
 is_phone = settings.is_phone
+ping_delay = settings.ping_delay
+enable_ascii = settings.enable_ascii
+print_guilds_connected = settings.print_guilds_connected
+is_debugging = settings.is_debugging
+DISCORD_FILE_LIMIT = settings.file_size_limit
 
-logging.basicConfig(level=logging.DEBUG)
+if is_debugging:
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    # User will still want good warnings.
+    logging.basicConfig(level=logging.WARNING)
 
-print("Bot Started at " + datetime.now().strftime("%H:%M:%S"))
+print(f"Bot Started at {datetime.now().strftime("%H:%M:%S")}")
 
 client = commands.Bot(command_prefix="n!", case_insensitive=True, intents=discord.Intents.all())
 
@@ -221,7 +228,7 @@ async def you_are_cute(interaction: discord.Interaction) -> None:
 @client.tree.command(name="ping")                                  # n!ping
 async def ping(interaction: discord.Interaction) -> None:
     """ Get my Ping """
-    await interaction.response.send_message("Pong! `" + str(client.latency * 100) + "ms`")
+    await interaction.response.send_message(f"Pong! `{(client.latency * 100):.3f}ms`")
 
 
 
@@ -1678,28 +1685,43 @@ async def blacklist_remove(interaction: discord.Interaction, user_id: discord.Me
         await interaction.followup.send("You're not recognized as a Natsukian. You can't add people to the blacklist.")
         
 
-
+#
+async def print_latency(client):
+    while True:
+        print(f"{(client.latency * 100):.3f}")
+        await asyncio.sleep(ping_delay)
 
 
 @client.event
 async def on_ready():      # Check if it runs
-    num = 0
-    await client.tree.sync()
-    print(f'{client.user} is connected to the following guilds:\n')
-    for _ in client.guilds:
-        guild = client.guilds[num]
-        print(
-            f'{num} - {guild.name} (id: {guild.id})'
-        )
-        num += 1
-    with open("./natsukis.json", encoding = "utf8") as file:
-        image_data = json.load(file)
-    image = random.choice(image_data["natsukis"])
-    image_id = image["id"]
-    image_ascii = image["image"]
-    print(f"Choose image <<{image_id}>>")
-    print(image_data["logo"])
-    print(f"{image_ascii}")
+    
+    # Print Guilds connected
+    if print_guilds_connected:
+        num = 0
+        await client.tree.sync()
+        print(f'{client.user} is connected to the following guilds:\n')
+        for _ in client.guilds:
+            guild = client.guilds[num]
+            print(
+                f'{num} - {guild.name} (id: {guild.id})'
+            )
+            num += 1
+    
+    # Print latency every 30 seconds
+    # Don't do if disabled (set to -1)
+    if not ping_delay == -1:
+        asyncio.create_task(print_latency(client))
+
+    # Print ASCII image of Natsuki
+    if enable_ascii:
+        with open("./natsukis.json", encoding = "utf8") as file:
+            image_data = json.load(file)
+        image = random.choice(image_data["natsukis"])
+        image_id = image["id"]
+        image_ascii = image["image"]
+        print(f"Choose image <<{image_id}>>")
+        print(image_data["logo"])
+        print(f"{image_ascii}")
 
 print("Please wait a few seconds for the bot to connect")
 
