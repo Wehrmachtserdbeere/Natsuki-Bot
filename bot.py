@@ -71,7 +71,8 @@ else:
     # User will still want good warnings.
     logging.basicConfig(level=logging.WARNING)
 
-print(f"Bot Started at {datetime.now().strftime("%H:%M:%S")}")
+time_now = datetime.now().strftime("%H:%M:%S")
+print(f"Bot Started at {time_now}")
 
 client = commands.Bot(command_prefix="n!", case_insensitive=True, intents=discord.Intents.all())
 
