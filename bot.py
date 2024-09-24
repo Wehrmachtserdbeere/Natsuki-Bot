@@ -1445,6 +1445,7 @@ et_titles = ['Video 1', 'Video 2', 'Video 3']
 
 @client.tree.command(name="embedtest")
 async def embedtest(interaction : discord.Interaction):
+    ''' Sends a testing embed. '''
     await interaction.response.defer()
     embed = discord.Embed(title = "YouTube Player", color = 0xff00cc)
     embed.set_author(name=interaction.client.user.display_name, icon_url=interaction.client.user.avatar, url="https://github.com/Wehrmachtserdbeere/Natsuki-Bot")
@@ -1540,6 +1541,38 @@ async def about_me(interaction : discord.Interaction, complexity : Literal['Simp
     await interaction.response.send_message(embed = embed)
 
 
+
+@client.tree.command(name="neet_ai")
+async def neet_ai(interaction : discord.Interaction, chat_message : str):
+    ''' Chat with NEET Natsuki '''
+    await interaction.response.defer(ephemeral = False, thinking = True)
+    await asyncio.sleep(3)
+    if random.randint(0,10) > 7:
+        await interaction.followup.send(content = "Can you repeat that?")
+    elif random.randint(0,10) > 7:
+        await interaction.followup.send(content = "Huh?")
+    else:
+        await interaction.followup.send(content = "*She's not responding...*")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @client.tree.command(name="privacy")
 async def privacy(interaction : discord.Interaction):
     '''See the Privacy Policy of the bot'''
@@ -1552,6 +1585,7 @@ bot_info = (
     "ffmpeg version: " + version('ffmpeg') + "\n" +
     "Bot version: " + __version__
 )
+
 
 @client.tree.command(name="bug_report")
 async def bug_report(interaction : discord.Interaction, short_desc : str, steps_to_repeat : str, urgent : Literal['Yes', 'No'] = 'No'):
