@@ -43,6 +43,7 @@ import subprocess
 from datetime import timedelta
 import defusedxml.ElementTree as ET
 import settings
+import youtube_login
 
 __author__ = "Strawberry Software"
 __copyright__ = "Copyright 2019-2024"
@@ -64,6 +65,9 @@ enable_ascii = settings.enable_ascii
 print_guilds_connected = settings.print_guilds_connected
 is_debugging = settings.is_debugging
 DISCORD_FILE_LIMIT = settings.file_size_limit
+
+username = youtube_login.username
+password = youtube_login.password
 
 if is_debugging:
     logging.basicConfig(level=logging.DEBUG)
@@ -140,6 +144,10 @@ ytdl_format_options = {
     'default_search': 'auto',
     'source_address': '0.0.0.0',  # bind to ipv4 since ipv6 addresses cause issues sometimes
 }
+
+if username and password:
+    ytdl_format_options['username'] = username
+    ytdl_format_options['password'] = password
 
 ytdl = yt_dlp.YoutubeDL(ytdl_format_options)
 

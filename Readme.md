@@ -3,9 +3,10 @@
 ## Installation
 
 1. Clone the repository or download the source directly and put it into a folder with nothing else inside.
-2. Create and fill two files:
+2. Create and fill these files:
 - `botToken.py`
 - `longterm_lists.json`
+- `youtube_login.py`
 3. If you run this via termux, you **have** to run these commands in this order:
     
     `pkg install python pip`
@@ -54,6 +55,13 @@ To get your Bot Token:
     "whitelist": []
 }
 ```
+
+`youtube_login.py`
+```py
+username = "your_username"
+password = "your_password"
+```
+
 That's all for this file. It may be replaced with an optional globally shared blacklist one day.
 
 ## Edit the Bot
