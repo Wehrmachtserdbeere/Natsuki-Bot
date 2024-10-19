@@ -1323,9 +1323,9 @@ async def _disconnect(interaction: discord.Interaction):
     vc = interaction.guild.voice_client
     if vc != None:
         vc.disconnect()
-        interaction.edit_original_response("Disconnected. See you next time! :D")
+        interaction.edit_original_response(content = "Disconnected. See you next time! :D")
     else:
-        interaction.edit_original_response("I'm not in a voice channel, dummy :P")
+        interaction.edit_original_response(content = "I'm not in a voice channel, dummy :P")
 
 @client.tree.command(name="queue")
 async def queue(interaction : discord.Interaction):
