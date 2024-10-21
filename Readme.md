@@ -112,11 +112,9 @@ That means the queue messed up and will inevitably start playing the wrong songs
 Queue command is slightly bugged, sometimes not showing the correct songs, or showing the song that is currently playing. The skip command *should* work.
 Please be aware that this is a rudimentary solution to play YT stuff after all big bots removed the feature.
 
-If you use the music modules, beware that the bot cannot play things that are blocked in your country. From my brief testing, it can play age-restricted videos. You can possibly bypass it, should it not work, via regular YT-DLP options and a VPN as such:
+If you use the music modules, beware that the bot cannot play things that are blocked in your country. From my testing, it ~~can~~ **CAN NOT** play age-restricted videos. You might be able to bypass it, but I do not know how. You **can** bypass country restrictions by using a VPN however.
 
-Create YouTube Account -> Create new file (JSON will be used in this example) -> Add it to .GITIGNORE (that way it won't leak information) -> Create a JSON file with the login credentials -> Modify the YT-DLP commands to log into the Account -> Turn on VPN -> Start Bot
-
-If you use a Server, you will have to run the Server with a VPN. This way, you bypass most country restrictions, and age restrictions (should they become an issue).
+If you use a Server, you will have to run the Server with a VPN. This way, you bypass most country restrictions.
 
 ## Dev notes
 

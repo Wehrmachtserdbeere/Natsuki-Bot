@@ -52,7 +52,7 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT"
-__version__ = "2.3.7"
+__version__ = "2.3.8"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/S8zDGPmXYv"
@@ -69,7 +69,7 @@ if is_debugging:
     logging.basicConfig(level=logging.DEBUG)
 else:
     # User will still want good warnings.
-    logging.basicConfig(level=logging.WARNING)
+    logging.basicConfig(level=logging.ERROR)
 
 time_now = datetime.now().strftime("%H:%M:%S")
 print(f"Bot Started at {time_now}")
@@ -1234,7 +1234,7 @@ async def _play(interaction: discord.Interaction, url: str):
     except PermissionError:
         await interaction.edit_original_response(content = "Permission err- wait what? Yea... \"Permission Error\". Huh.")
     except yt_dlp.DownloadError:
-        await interaction.edit_original_response(content = "Video unavailable. Most likely because this content is not available in the host country.")
+        await interaction.edit_original_response(content = "Video unavailable. Most likely because this content is age-restricted or not available in the host country.\nComplain to YouTube about this, I cannot fix this.")
     #except Exception as e:
     #    await interaction.edit_original_response(content = "Error: " + str(e))
     except OSError:
