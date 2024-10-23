@@ -1278,7 +1278,7 @@ async def playlist(interaction: discord.Interaction):
     ''' Show the current playlist '''
     await interaction.response.defer()
     if not songs_list:
-        interaction.edit_original_response(content = f"The playlist is empty.")
+        await interaction.edit_original_response(content = f"The playlist is empty.")
     else:
         embed = discord.Embed(
             title = "Natsukibot - Playlist",
@@ -1298,6 +1298,7 @@ async def playlist(interaction: discord.Interaction):
                 )
             else:
                 break
+        embed.set_footer(text = f"Running on Germany's best internet at {(client.latency * 100):.3f}ms ping!")
         await interaction.edit_original_response(embed = embed)
 
 
@@ -1322,34 +1323,13 @@ async def _disconnect(interaction: discord.Interaction):
     vc: discord.VoiceClient
     vc = interaction.guild.voice_client
     if vc != None:
-        vc.disconnect()
-        interaction.edit_original_response(content = "Disconnected. See you next time! :D")
-    else:
-        interaction.edit_original_response(content = "I'm not in a voice channel, dummy :P")
-
-@client.tree.command(name="queue")
-async def queue(interaction : discord.Interaction):
-    ''' See the Queue '''
-    queue_v = ""
-    i = 0
-    await interaction.response.defer()
-    try:
-        if songs_title:
-            
-
-            embed = discord.Embed(title = "YouTube Player", color = 0xff00cc)
-            embed.set_author(name=interaction.client.user.display_name, icon_url=interaction.client.user.avatar, url="https://github.com/Wehrmachtserdbeere/Natsuki-Bot")
-            j = 0
-            embed.add_field(name=playnow_requester, value=f"[{playnow_title}]({playnow_url}) - {timedelta(seconds=playnow_length)}", inline=False)
-            for _ in song_urls:
-                embed.add_field(name=song_requester[j], value=f"[{songs_title[j]}]({song_urls[j]}) - {timedelta(seconds=song_length[j])}", inline=False)
-                j += 1
-            embed.set_footer(text=f"Bot Version: {__version__} - Running on Germany's best internet connection since 1941!")
-            await interaction.edit_original_response(embed=embed)
+        await vc.disconnect(force=True)
+        if interaction.guild.voice_client == None:
+            await interaction.edit_original_response(content = "Disconnected. See you next time! :D")
         else:
-            await interaction.edit_original_response(content="Queue is empty!")
-    except Exception as e:
-        await interaction.edit_original_response(content="Error! - " + str(e))
+            await interaction.edit_original_response(content = "Something unexpected happened, please disconnect me manually =)")
+    else:
+        await interaction.edit_original_response(content = "I'm not in a voice channel, dummy :P")
 
 
 
