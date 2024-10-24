@@ -26,7 +26,7 @@
 	
     This should install the modules required to run the bot.
 
-5. Set up the environment (Guaranteed to work in Python 3.11.3)
+5. Set up the environment (Guaranteed to work in Python 3.12.3)
 6. Edit the bot (More information below)
 7. Run the bot
 
@@ -80,7 +80,7 @@ Please refrain from contact me if you are planning to add your political, religi
 
 ## Images / ASCII Art
 
-When starting the bot, you may see ASCII image art. You can remove this by editing the `async def on_ready()` command, and removing `natsukis.json`.
+When starting the bot, you may see ASCII image art. You can remove this by setting `enable_ascii` to `False` inside `settings.py`.
 
 Similarly, you can add more art by following the JSON file format, and adding your own ASCII art. The JSON is stuctured as follows:
 
@@ -96,21 +96,28 @@ Similarly, you can add more art by following the JSON file format, and adding yo
 
 An easy way to check ASCII art is to create a Python file that prints the ASCII, then opening the Python file inside Command Prompt.
 
-*Compatibility with the Linux Terminal is **not** guaranteed!*
+*Compatibility with the anything but the Windows 10 Command Prompt is **not** guaranteed!*
 
 ### Important: The ASCII art must **only** use UTF-8 characters!
 It will not work otherwise.
 
-If you wish to add your own ASCII art, open a suggestion issue, credit the original artist, and provide a screenshot of your console either running the bot, or a program to display the ASCII art.
+If you wish to add your own ASCII art to the examples, open a suggestion issue, credit the original artist, and provide a screenshot of your console running either the bot or another program to display the ASCII art.
+
+Generally, keep its width to ~64 characters.
 
 ## Music
 
 The Music function is kinda buggy and still worked on.
 
-If the bot starts acting up, examples include showing the wrong title, length, or thumbnail, you will have to restart the bot.
-That means the queue messed up and will inevitably start playing the wrong songs. Avoid requesting songs at the same time.
-Queue command is slightly bugged, sometimes not showing the correct songs, or showing the song that is currently playing. The skip command *should* work.
-Please be aware that this is a rudimentary solution to play YT stuff after all big bots removed the feature.
+**Playlists do not work!** If you send the link to a playlist, it will only play the selected song. If you can fix this issue, please contact me and I will add your fix and add you to the credits!
+
+If the bot starts acting up, examples include showing the wrong title, length, or thumbnail, you will have to restart the bot. That means the queue messed up and will inevitably start playing the wrong songs. Avoid requesting songs at the same time.
+
+The Playlist command is slightly bugged, sometimes not showing the correct songs, or showing the song that is currently playing.
+
+The skip command *should* work.
+
+Please be aware that this is a rudimentary solution to play YT stuff after all big bots removed the feature for an immature reason. (But hey, while you cannot play YouTube videos or get support for playing them, at least you can be a child predator on Discord without facing any problems! Some of the Discord Administrators even are some!)
 
 If you use the music modules, beware that the bot cannot play things that are blocked in your country. From my testing, it ~~can~~ **CAN NOT** play age-restricted videos. You might be able to bypass it, but I do not know how. You **can** bypass country restrictions by using a VPN however.
 

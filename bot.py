@@ -1,3 +1,16 @@
+__author__ = "Strawberry Software"
+__copyright__ = "Copyright 2019-2024"
+__credits__ = [
+    "Strawberry",
+    "Vim - An old Friend of Strawberry's",
+    "italy2003 (https://www.pixiv.net/en/users/66835722)"
+    ]
+__license__ = "MIT"
+__version__ = "2.3.9"
+__maintainer__ = "Strawberry"
+__status__ = "Development"
+__support_discord__ = "https://discord.gg/S8zDGPmXYv"
+
 # bot.py
 
 #
@@ -43,19 +56,6 @@ import subprocess
 from datetime import timedelta
 import defusedxml.ElementTree as ET
 import settings
-
-__author__ = "Strawberry Software"
-__copyright__ = "Copyright 2019-2024"
-__credits__ = [
-    "Strawberry",
-    "Vim - An old Friend of Strawberry's",
-    "italy2003 (https://www.pixiv.net/en/users/66835722)"
-    ]
-__license__ = "MIT"
-__version__ = "2.3.8"
-__maintainer__ = "Strawberry"
-__status__ = "Development"
-__support_discord__ = "https://discord.gg/S8zDGPmXYv"
 
 # Settings
 is_phone = settings.is_phone
@@ -1169,6 +1169,10 @@ async def _play(interaction: discord.Interaction, url: str):
         if interaction.user.voice == None:
             await interaction.edit_original_response(content = "You're not in a voice channel!")
             return
+
+        if not "?v=" in url:
+            await interaction.edit_original_response(content = "I cannot play playlists. Apologies :(")
+            return
     
         vc: discord.VoiceClient
         vc = interaction.guild.voice_client
@@ -1266,10 +1270,20 @@ def get_video_info(url: str):
 async def remove(interaction: discord.Interaction, entry: int):
     ''' Remove entry from Playlist. Entry starts at 0 for the first entry, 1 for the second, and so on! '''
     await interaction.response.defer()
+
+    if entry == 0:
+        entry = 1
+        dev_checker = True
+
     if songs_list.index(entry - 1):
         songs_list.remove(entry - 1) # Make up that Python counts from 0. This way, if you want the 5th song gone, and type in "5", it correctly removed the fifth song, which is at Python position 4 (0, 1, 2, 3, 4).
+        if dev_checker:
+            await interaction.edit_original_response(content = "Removed! By the way, I saw you're a programmer (or mistyped), so do note that the playlist starts at 1, not at 0.")
+        else:
+            await interaction.edit_original_response(content = "Removed!")
+
     elif songs_list.index(entry):
-        await interaction.edit_original_response(content = f"There is no song at spot {entry}. Did you mean to remove {entry - 1}?")
+        await interaction.edit_original_response(content = f"There is no song at spot {entry}.")
     else:
         await interaction.edit_original_response(content = f"Sorry, I didn't find anything at the {entry}. position. I didn't find any at {entry + 1} either.")
 
@@ -1292,12 +1306,13 @@ async def playlist(interaction: discord.Interaction):
                 cur_songs_info = get_video_info(song)
 
                 embed.add_field(
-                    name = f"{i + 1}. {cur_songs_info[0]})", # Title
-                    value = f"[Link]({song})\nLength: {timedelta(seconds = cur_songs_info[1])}",
+                    name = f"{i + 1}. {cur_songs_info[0]}", # Title
+                    value = f"[Link]({song})\nLength: {timedelta(seconds = cur_songs_info[1])}", # Link
                     inline  = False
                 )
+                i += 1
             else:
-                break
+                pass
         embed.set_footer(text = f"Running on Germany's best internet at {(client.latency * 100):.3f}ms ping!")
         await interaction.edit_original_response(embed = embed)
 
