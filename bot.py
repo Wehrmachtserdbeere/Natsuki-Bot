@@ -6,7 +6,7 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT"
-__version__ = "2.3.9"
+__version__ = "2.3.10"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/S8zDGPmXYv"
@@ -1708,6 +1708,15 @@ async def blacklist_remove(interaction: discord.Interaction, user_id: discord.Me
     ''' Bot Owner only command - Removes someone from blacklist using their UserID '''
     await interaction.response.defer()
     user_id_str = str(user_id.id)
+
+    # Load the blacklist and whitelist data
+    data: dict
+    whitelist: list
+    blacklist: list
+    data = load_longterm_lists()
+    admins = data.get("true_natsukians", [])
+    whitelist = data.get("whitelist", [])
+    blacklist = data.get("blacklist", [])
 
     if str(interaction.user.id) in admins:
         # Check if the user is in the whitelist
