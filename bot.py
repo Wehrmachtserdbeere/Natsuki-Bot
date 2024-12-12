@@ -841,26 +841,66 @@ list_ = [
     "cnnuy"
 ]
 
+
 @client.event
-async def on_message(message):
+async def on_message(message: discord.Message):
     if message.author == client.user:
         return
 
-    flag = False
+    blacklist_data = load_longterm_lists()
+    if check_user_in_blacklist(user_id = message.author.id, blacklist_data = blacklist_data):
+        return
+
+    ### Cunny Reaction ###
+
+    ### Cunny Reaction ###
     message_lowsplit = message.content.lower().split()
 
-    flag = any(substring in message_lowsplit for substring in list_)
-
-    for word in message_lowsplit:
-        if word.startswith('u'):
-            if word.endswith('h'):
-                if re.search('o', word):
-                    if not re.search('[a-gi-np-tv-z]', word):
-                        await message.add_reaction('😭')
-
-    if flag:
+    # Check for any flagged substrings in the message
+    if any(substring in message_lowsplit for substring in list_):
         await message.add_reaction('😭')
 
+    # Check for words meeting specific criteria
+    for word in message_lowsplit:
+        if word.startswith('u') and word.endswith('h') and re.search('o', word) and not re.search('[a-gi-np-tv-z]', word):
+            await message.add_reaction('😭')
+            break  # Exit early since reaction is already added
+
+
+    ### Twitter Renamer ###
+
+    links = re.findall(r"(?P<url>https?://[\w.-]+/[\S]*)", message.content)
+    if links:
+        final_list = []
+
+        # Iterate through the links to check and modify them
+        for sublink in links:
+            if "https://x.com" in sublink:
+                modified_link = sublink.replace("//x.com", "//vxtwitter.com")
+                final_list.append(modified_link)
+            elif "https://twitter.com" in sublink:
+                modified_link = sublink.replace("//twitter.com", "//vxtwitter.com")
+                final_list.append(modified_link)
+
+        # If any links were modified, remove embeds and send the modified links
+        if final_list:
+            # Remove embeds from the message
+            if message.embeds:
+                await message.edit(suppress = True)
+
+            # Send the modified links to the same channel
+            await message.channel.send("\n".join(final_list))
+    
+
+    ### Webm Converter ###
+
+    # Check if it has *any* attachments
+    if message.attachments:
+        Converter = WebmConverter()
+        await Converter.check_for_webm_attachment(discord_message = message, channel_id = message.channel.id)
+    
+
+        
 
 
 class WebmConverter(commands.Cog):
@@ -1070,19 +1110,6 @@ class WebmConverter(commands.Cog):
             Generally raised if a touple list was expected but not received.
             """
             pass
-
-# Check if attachment has webm video
-@client.event
-async def on_message(message: discord.Message):
-    # Avoid responding to the bot's own messages
-    if message.author == client.user:
-        return
-    
-    # Check if it has *any* attachments
-    if message.attachments:
-        Converter = WebmConverter()
-        await Converter.check_for_webm_attachment(discord_message = message, channel_id = message.channel.id)
-
         
 
 
@@ -1532,7 +1559,7 @@ async def about_me(interaction : discord.Interaction, complexity : Literal['Simp
         embed.add_field(name = "Python Version:", value = f"`{sys.version}`", inline = False)
         embed.add_field(name = "Discord.py Version:", value = f"`{version('discord')}`", inline = False)
         embed.add_field(name = "FFMPEG Version:", value = f"`{version('ffmpeg')}`", inline = False)
-    embed.set_footer(text = f"Bot Version: `{__version__}`")
+    embed.set_footer(text = f"Bot Version: v{__version__}")
     await interaction.response.send_message(embed = embed)
 
 
@@ -1681,15 +1708,6 @@ async def blacklist_remove(interaction: discord.Interaction, user_id: discord.Me
     ''' Bot Owner only command - Removes someone from blacklist using their UserID '''
     await interaction.response.defer()
     user_id_str = str(user_id.id)
-
-    # Load the blacklist and whitelist data
-    data: dict
-    whitelist: list
-    blacklist: list
-    data = load_longterm_lists()
-    admins = data.get("true_natsukians", [])
-    whitelist = data.get("whitelist", [])
-    blacklist = data.get("blacklist", [])
 
     if str(interaction.user.id) in admins:
         # Check if the user is in the whitelist

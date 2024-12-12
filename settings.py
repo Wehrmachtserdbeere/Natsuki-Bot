@@ -7,8 +7,9 @@ is_phone = False
 
 # Please set here the time between each printing of the bot's ping. This is in seconds.
 #   - To disable it, set it to "-1"
-# Default: 10
-ping_delay = 10
+#   - Recommended for debugging: <=10
+# Default: 30
+ping_delay = 30
 
 # Please set here whether you wish to have ASCII art displayed in your console.
 # Default: True
