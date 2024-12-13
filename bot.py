@@ -6,7 +6,7 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT"
-__version__ = "2.3.10"
+__version__ = "2.3.13"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/S8zDGPmXYv"
@@ -20,6 +20,7 @@ __support_discord__ = "https://discord.gg/S8zDGPmXYv"
 import asyncio
 import json
 import math
+import time
 import tkinter
 import aiohttp
 
@@ -904,14 +905,9 @@ async def on_message(message: discord.Message):
                         final_list.append(link.replace(original, replacement))
                         break
 
-        # If any links were modified, remove embeds and send the modified links
-        if final_list:
-            # Remove embeds from the message
-            if message.embeds:
-                await message.edit(suppress=True)
-
-            # Send the modified links to the same channel
-            await message.channel.send("\n".join(final_list))
+        # Remove embeds from the original message
+        if message.embeds:
+            await message.edit(suppress=True)
     
 
     ### Webm Converter ###
