@@ -516,19 +516,6 @@ async def oracle_ger(interaction: discord.Interaction, amount_de: int):
         await interaction.response.send_message(functools.reduce(lambda line, word: line + f"{word} ", (random.choice(oracle_de_words) for _ in range(amount_de)), str()))
 
 
-@client.tree.command(name="fap")
-async def fap(interaction: discord.Interaction):
-    """ Send this if someone mentions porn """
-    await interaction.response.send_message(
-    "\n☝️ أيها الإخوة ، لا تشاهدوا الإباحية. إنه يخيب آمال الرب. ☝"
-    "\n☝️وروsو ، فحش مه ګورئ. دا څښتن مایوسه کوي. ☝️\n"
-    "☝️Αδέλφια, μην βλέπετε πορνό. Απογοητεύει τον Κύριο. ☝\n"
-    "☝️Fratres, nolite vigilare sex. Decipit Dominum. ☝️\n"
-    "☝️Братья, не смотрите порно. Это разочаровывает Господа. ☝\n️"
-    "☝️Brothers, do not watch porn. It disappoints the Lord.☝️\n"
-    )
-
-
 
 @client.tree.command(name="safe")
 @app_commands.describe(tags = "Enter tags in a `tag 1, tag 2 (series name), -banned tag, *wildcard` format")
@@ -577,6 +564,10 @@ async def gel(interaction: discord.Interaction, tags: str, nsfw: Literal['safe',
     if result:
         uid, reason = result
         await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        return
+    elif not interaction.channel.nsfw and nsfw.lower() in ['questionable', 'explicit only', 'all']:
+        await interaction.response.send_message(f"Could not run command! This command is for channels marked NSFW only!")
+        return
     else:
         urlSafePre = ""
         try:
@@ -658,6 +649,10 @@ async def rule34xxx(interaction: discord.Interaction, tags: str, gendered: Liter
     if result:
         uid, reason = result
         await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        return
+    elif not interaction.channel.nsfw:
+        await interaction.response.send_message(f"Could not run command! This command is for channels marked NSFW only!")
+        return
     else:
         pass
     
@@ -740,6 +735,10 @@ async def bleach(interaction: discord.Interaction, tags: str, nsfw: Literal['saf
     if result:
         uid, reason = result
         await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        return
+    elif not interaction.channel.nsfw:
+        await interaction.response.send_message(f"Could not run command! This command is for channels marked NSFW only!")
+        return
     else:
         urlSafePreBleach = ""
         try:
@@ -869,24 +868,47 @@ async def on_message(message: discord.Message):
 
     ### Twitter Renamer ###
 
-    links = re.findall(r"(?P<url>https?://[\w.-]+/[\S]*)", message.content)
-    if links:
-        final_list = []
+    # List of domains to exclude from processing
+    excluded_domains = [
+        "fxtwitter.com"
+    ]
 
-        # Iterate through the links to check and modify them
-        for sublink in links:
-            if "https://x.com" in sublink:
-                modified_link = sublink.replace("//x.com", "//vxtwitter.com")
-                final_list.append(modified_link)
-            elif "https://twitter.com" in sublink:
-                modified_link = sublink.replace("//twitter.com", "//vxtwitter.com")
-                final_list.append(modified_link)
+    links = re.findall(r"https?://(?:www\.)?[\w.-]+/[\S]*", message.content)
+
+    if links:
+        replacements = {
+            "x.com": "vxtwitter.com",
+            "twitter.com": "vxtwitter.com",
+            "tiktok.com": "vxtiktok.com",
+            "instagram.com": "d.ddinstagram.com",
+            "pixiv.net": "phixiv.net"
+        }
+
+        # Collect the replacement domains
+        modified_domains = {replacement.split('/')[0] for replacement in replacements.values()}
+
+        final_list = []
+        for link in links:
+            # Extract the domain name from the link
+            domain_match = re.search(r"https?://(?:www\.)?([\w.-]+)/", link)
+            if domain_match:
+                full_domain = domain_match.group(1)
+
+                # Skip if the full domain is already a modified one or in the excluded domains
+                if full_domain in modified_domains or full_domain in excluded_domains:
+                    continue
+
+                # Perform replacements
+                for original, replacement in replacements.items():
+                    if original in link:
+                        final_list.append(link.replace(original, replacement))
+                        break
 
         # If any links were modified, remove embeds and send the modified links
         if final_list:
             # Remove embeds from the message
             if message.embeds:
-                await message.edit(suppress = True)
+                await message.edit(suppress=True)
 
             # Send the modified links to the same channel
             await message.channel.send("\n".join(final_list))
