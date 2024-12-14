@@ -875,6 +875,7 @@ async def on_message(message: discord.Message):
     ]
 
     links = re.findall(r"https?://(?:www\.)?[\w.-]+/[\S]*", message.content)
+    has_embed = False
 
     if links:
         replacements = {
@@ -893,6 +894,7 @@ async def on_message(message: discord.Message):
             # Extract the domain name from the link
             domain_match = re.search(r"https?://(?:www\.)?([\w.-]+)/", link)
             if domain_match:
+                has_embed = True
                 full_domain = domain_match.group(1)
 
                 # Skip if the full domain is already a modified one or in the excluded domains
@@ -906,7 +908,7 @@ async def on_message(message: discord.Message):
                         break
 
         # Remove embeds from the original message
-        if message.embeds:
+        if message.embeds and has_embed:
             await message.edit(suppress=True)
     
 
