@@ -905,11 +905,14 @@ async def on_message(message: discord.Message):
                 for original, replacement in replacements.items():
                     if original in link:
                         final_list.append(link.replace(original, replacement))
-                        break
 
-        # Remove embeds from the original message
-        if message.embeds and has_embed:
-            await message.edit(suppress=True)
+                        # Remove embeds from the original message
+                        if message.embeds and has_embed:
+                            time.sleep(2)
+                            await message.edit(suppress=True)
+                            has_embed = False
+
+                        break
     
 
     ### Webm Converter ###
