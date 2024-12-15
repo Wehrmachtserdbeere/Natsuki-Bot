@@ -6,7 +6,7 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT"
-__version__ = "2.3.15"
+__version__ = "2.3.16"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/S8zDGPmXYv"
@@ -915,7 +915,8 @@ async def on_message(message: discord.Message):
                         break
         
         # Only send the first post
-        await message.channel.send(final_list[0])
+        if final_list:
+            await message.channel.send(final_list[0])
     
 
     ### Webm Converter ###
