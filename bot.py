@@ -6,7 +6,7 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT"
-__version__ = "2.3.14"
+__version__ = "2.3.15"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/S8zDGPmXYv"
@@ -901,6 +901,7 @@ async def on_message(message: discord.Message):
                 if full_domain in modified_domains or full_domain in excluded_domains:
                     continue
 
+                time.sleep(2)
                 # Perform replacements
                 for original, replacement in replacements.items():
                     if original in link:
@@ -908,7 +909,6 @@ async def on_message(message: discord.Message):
 
                         # Remove embeds from the original message
                         if message.embeds and has_embed:
-                            time.sleep(2)
                             await message.edit(suppress=True)
                             has_embed = False
 
