@@ -894,25 +894,25 @@ async def on_message(message: discord.Message):
             # Extract the domain name from the link
             domain_match = re.search(r"https?://(?:www\.)?([\w.-]+)/", link)
             if domain_match:
-                has_embed = True
+                has_embed = False
                 full_domain = domain_match.group(1)
 
                 # Skip if the full domain is already a modified one or in the excluded domains
                 if full_domain in modified_domains or full_domain in excluded_domains:
                     continue
 
-                time.sleep(2)
                 # Perform replacements
                 for original, replacement in replacements.items():
                     if original in link:
                         final_list.append(link.replace(original, replacement))
-
-                        # Remove embeds from the original message
-                        if message.embeds and has_embed:
-                            await message.edit(suppress=True)
-                            has_embed = False
-
+                        has_embed = True
                         break
+                
+                # Remove embeds from the original message
+                if has_embed:
+                    await asyncio.sleep(2)
+                    message = await message.channel.fetch_message(message.id)
+                    await message.edit(suppress=True)
         
         # Only send the first post
         if final_list:
