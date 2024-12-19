@@ -882,7 +882,7 @@ async def on_message(message: discord.Message):
             "x.com": "vxtwitter.com",
             "twitter.com": "vxtwitter.com",
             "tiktok.com": "vxtiktok.com",
-            "instagram.com": "d.ddinstagram.com",
+            "instagram.com": "ddinstagram.com",
             "pixiv.net": "phixiv.net"
         }
 
