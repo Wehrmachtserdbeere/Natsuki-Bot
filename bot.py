@@ -872,6 +872,7 @@ async def on_message(message: discord.Message):
     # List of domains to exclude from processing
     excluded_domains = [
         "fxtwitter.com"
+        "fixvx.com"
     ]
 
     links = re.findall(r"https?://(?:www\.)?[\w.-]+/[\S]*", message.content)
@@ -879,11 +880,16 @@ async def on_message(message: discord.Message):
 
     if links:
         replacements = {
-            "x.com": "vxtwitter.com",
-            "twitter.com": "vxtwitter.com",
-            "tiktok.com": "vxtiktok.com",
-            "instagram.com": "ddinstagram.com",
-            "pixiv.net": "phixiv.net"
+            "https://x.com": "https://vxtwitter.com",
+            "www.x.com": "https://vxtwitter.com",
+            "https://twitter.com": "https://vxtwitter.com",
+            "www.twitter.com": "https://vxtwitter.com",
+            "https://tiktok.com": "https://vxtiktok.com",
+            "www.tiktok.com": "https://vxtiktok.com",
+            "https://instagram.com": "https://ddinstagram.com",
+            "www.instagram.com": "https://ddinstagram.com",
+            "https://pixiv.net": "https://phixiv.net",
+            "www.pixiv.net": "https://phixiv.net"
         }
 
         # Collect the replacement domains
@@ -910,7 +916,7 @@ async def on_message(message: discord.Message):
                 
                 # Remove embeds from the original message
                 if has_embed:
-                    await asyncio.sleep(2)
+                    await asyncio.sleep(1)
                     message = await message.channel.fetch_message(message.id)
                     await message.edit(suppress=True)
         
