@@ -889,6 +889,9 @@ async def on_message(message: discord.Message):
             "https://tiktok.com": "https://vxtiktok.com",
             "https://www.tiktok.com": "https://vxtiktok.com",
             "www.tiktok.com": "https://vxtiktok.com",
+            "www.instagram.com": "www.kkinstagram.com",
+            "https://instagram.com": "https://kkinstagram.com",
+            "https://www.instagram.com": "https://kkinstagram.com",
             "https://pixiv.net": "https://phixiv.net",
             "https://www.pixiv.net": "https://phixiv.net",
             "www.pixiv.net": "https://phixiv.net"
