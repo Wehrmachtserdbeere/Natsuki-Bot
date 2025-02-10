@@ -907,7 +907,7 @@ async def on_message(message: discord.Message):
 
         twitter_alt = "https://vxtwitter.com"
         tiktok_alt = "https://vxtiktok.com"
-        instagram_alt = "www.kkinstagram.com"
+        instagram_alt = "https://www.kkinstagram.com"
         pixiv_alt = "https://phixiv.net"
         youtube_alt = "https://youtube.com/watch?v="
 
@@ -930,12 +930,12 @@ async def on_message(message: discord.Message):
             "https://pixiv.net": pixiv_alt,
             "https://www.pixiv.net": pixiv_alt,
             "www.pixiv.net": pixiv_alt,
-            "www.youtube.com/shorts/": youtube_alt,
-            "https://www.youtube.com/shorts/": youtube_alt,
             "https://youtube.com/shorts/": youtube_alt,
-            "www.youtu.be/": youtube_alt,
+            "https://www.youtube.com/shorts/": youtube_alt,
+            "www.youtube.com/shorts/": youtube_alt,
             "https://youtu.be/": youtube_alt,
             "https://www.youtu.be/": youtube_alt,
+            "www.youtu.be/": youtube_alt,
         }
 
         # Collect the replacement domains
