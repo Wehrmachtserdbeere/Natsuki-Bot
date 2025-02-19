@@ -1,15 +1,16 @@
 __author__ = "Strawberry Software"
-__copyright__ = "Copyright 2019-2024"
+__copyright__ = "Copyright 2019-2025"
 __credits__ = [
     "Strawberry",
     "Vim - An old Friend of Strawberry's",
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT"
-__version__ = "2.3.17"
+__version__ = "2.3.20"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/S8zDGPmXYv"
+__invite_link__ = "https://discord.com/api/oauth2/authorize?client_id=883082974252384277&permissions=8&scope=bot"
 
 # bot.py
 
@@ -26,6 +27,7 @@ import aiohttp
 
 if __name__ == "__main__":
     pass
+
 import random
 import os
 import sys
@@ -65,6 +67,7 @@ enable_ascii = settings.enable_ascii
 print_guilds_connected = settings.print_guilds_connected
 is_debugging = settings.is_debugging
 DISCORD_FILE_LIMIT = settings.file_size_limit
+waifugame_enabled = settings.enable_waifugame
 
 if is_debugging:
     logging.basicConfig(level=logging.DEBUG)
@@ -75,7 +78,12 @@ else:
 time_now = datetime.now().strftime("%H:%M:%S")
 print(f"Bot Started at {time_now}")
 
-client = commands.Bot(command_prefix="n!", case_insensitive=True, intents=discord.Intents.all())
+client = commands.Bot(
+    command_prefix="n!",
+    description="A bot of the best character in DDLC!",
+    case_insensitive=True,
+    intents=discord.Intents.all()
+    )
 
 mp3_path = list(Path("D:\\Alles\\Alle Musik und Videos\\RR\\").rglob("*.mp3")) # <-- EDIT this to whatever folder your music is in.
 folders = [
@@ -873,6 +881,11 @@ list_ = [
 @client.event
 async def on_message(message: discord.Message):
     if message.author == client.user:
+        try:
+            await message.add_reaction(trash_emoji)
+        except:
+            print("Couldn't add emoji to own message :/")
+            pass
         return
 
     # Load blacklist only if necessary
@@ -977,7 +990,6 @@ async def on_message(message: discord.Message):
     if message.attachments:
         Converter = WebmConverter()
         await Converter.check_for_webm_attachment(discord_message = message, channel_id = message.channel.id)
-    
 
         
 
@@ -1625,6 +1637,7 @@ async def about_me(interaction : discord.Interaction, complexity : Literal['Simp
     embed.set_thumbnail(url = "https://img3.gelbooru.com/images/dc/b0/dcb07993482d9b81ab3d521c7d0d504a.jpg") # <-- EDIT this to your desired thumbnail
     embed.add_field(name = "Author:", value = f"[{__author__}](https://wehrmachtserdbeere.github.io/)", inline = False) # <-- EDIT this to your website
     embed.add_field(name = "Support:", value = f"[Support Server](https://discord.gg/S8zDGPmXYv)", inline = False) # <-- EDIT this to your support site.
+    embed.add_field(name = "Invite:", value = __invite_link__, inline = False) # <-- EDIT this to your bot invite link.
     if complexity == 'Complex':
         embed.add_field(name = "Python Version:", value = f"`{sys.version}`", inline = False)
         embed.add_field(name = "Discord.py Version:", value = f"`{version('discord')}`", inline = False)
@@ -1648,8 +1661,248 @@ async def neet_ai(interaction : discord.Interaction, chat_message : str):
 
 
 
+# The "-> dict" part is the return type. It's not necessary, but it's apparently good practice.
+def waifugame_get_data(link : str) -> dict:
+    '''
+    Get gelbooru data of a card from WaifuGame because they block non-logged in users from accessing their API.
+    
+    As a side effect, this requires several unnecessary steps just to be able to find the actual source, which is fairly evil in my opinion, because it makes it harder to find the original artist while still using their copyrighted art.
+    '''
+
+    response = requests.get(link)
+
+    if response.status_code != 200:
+        return None
+    
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    image_html = soup.find("img", {"id": "cardInfoImg"})
+    image_src = image_html["src"]
+
+    print(f"Image source: {image_src}")
+
+    # Turn Waifugame image link to Gelbooru API link
+    match = re.search(r'G-(\d+)@', image_src)
+    if match:
+        image_id = match.group(1)
+        new_url = f"https://gelbooru.com/index.php?page=dapi&s=post&q=index&id={image_id}"
+        print(f"New URL: {new_url}")
+    else:
+        print("ID not found in the URL.")
+        return None
+    
+    # Get XML
+    response = requests.get(new_url)
+
+    if response.status_code != 200:
+        print("No Gelbooru data :(")
+        return None
+    
+    # Request to String
+    gelbooru_xml = response.text
+
+    # Parse the XML
+    root = ET.fromstring(gelbooru_xml)
+
+    # Find the first post element
+    post = root.find("post")
+
+    # Convert it to a dictionary
+    post_dict = {child.tag: child.text.strip() if child.text else "" for child in post}
+
+    # Print the resulting dictionary
+    print(post_dict)
+
+    return post_dict
+
+banned_tags = [ # <-- EDIT this with tags you want to BAN (i.E. no image shown, warning added)
+    "transgender",
+    "transgender_flag",
+    "transgender_colors",
+    "transsexual",
+    "guro",
+    "gore",
+    "death",
+    "murder",
+    "beaten",
+    "decapitated_head",
+    "decapitation",
+    "female_death",
+    "necrophilia",
+    "ryona",
+    "severed_head",
+    "skullfuck",
+    "skull_fucking",
+    "snuff",
+    "scat",
+    "shit",
+    "scat_inflation",
+    "poop",
+    "pooping",
+    "defecating",
+    "shitting_self",
+    "fart",
+    "farting",
+    "fart_cloud",
+    "fart_fetish",
+    "hyper_fart",
+]
+
+blocked_tags = [ # <-- EDIT this with tags you want to block (i.E. no image preview).
+    "penis",
+    "multiple_penises",
+    "futanari",
+    "futa_only",
+    "yaoi",
+    "hyper_ass",
+    "giant_ass",
+    "gigantic_breasts",
+    "enormous_breasts",
+    "massive_breasts",
+    "colossal_breasts",
+    "astronomical_breasts",
+    "obese",
+    "fat",
+    "fat_man",
+    "fat_woman",
+    "plump"
+]
+
+if waifugame_enabled:
+    @client.tree.command(name="waifugame_id_grabber")
+    async def waifugame_id_grabber(interaction : discord.Interaction, card_id : int = -1, message_link : str = None):
+        ''' Check a Waifugame Card's ID (currently non-functional due to Waifugame incompetency) '''
+        await interaction.response.defer()
+
+        # Prepare embed
+        embed = discord.Embed()
+
+        embed.title = "Waifugame Card Checker"
+
+        if message_link:
+            message_link_parts = message_link.split('/')
+            channel_id = message_link_parts[-2]
+            message_id = message_link_parts[-1]
+
+            # Get the message
+            message = await client.get_channel(int(channel_id)).fetch_message(int(message_id))
+
+            # Get the first embed of the message
+            message_embed = message.embeds[0]
+
+            # Get the description of the embed
+            message_description = str(message_embed.description)
+
+            # Search for the card ID in the description
+            match = re.search(r"№ (\d+)", message_description)
+
+            card_id = int(match.group(1)) # Get the card ID
 
 
+        if card_id != -1:
+            link_to_card = f"https://waifugame.com/c/{card_id}"
+            data = waifugame_get_data(link_to_card)
+        else:
+            await interaction.edit_original_response("Invalid Card ID. Please spam ping the developer to fix this.") # <-- EDIT this if you don't like to be notified of errors.
+
+
+
+        nsfw = {
+            "general": False,
+            "questionable": True,
+            "explicit": True
+        }
+
+        # Check if NSFW. By default, assume it is.
+        isNSFW = nsfw.get(data["rating"], True)
+
+        tags : str
+        tags = data["tags"]
+        tags = tags.split()
+
+        isBanned = False
+        isBlocked = False
+
+        for tag in tags:
+            if tag in banned_tags:
+                isBanned = True
+                break
+            elif tag in blocked_tags:
+                isBlocked = True
+                break
+
+        # Math that I am too stupid to understand
+        gcd = math.gcd(int(data['width']), int(data['height']))
+        ratio = f"{int(data['width']) // gcd}:{int(data['height']) // gcd}"
+
+        # Source image, height and width, and ratio
+        embed.add_field(
+            name = "",
+            value = f"Source: <{data['source']}>\n" +
+                f"-# Width x Height: {data['width']} x {data['height']} ; Ratio: {ratio}",
+        )
+
+        # Rating
+        embed.add_field(
+            name = "",
+            value = f"Rating: {str.capitalize(data['rating'])}",
+            inline = False
+        )
+
+        # Hide image preview if NSFW in a non-NSFW channel
+        if isBanned:
+            embed.add_field(
+                name = "",
+                value = "Image: Not provided due to banned tags.",
+                inline = False
+            )
+        elif isNSFW and not (interaction.channel.is_nsfw or isBlocked):
+            embed.add_field(
+                name = "",
+                value = f"Image: (NSFW!) <{data['file_url']}>",
+                inline = False
+            )
+        else:
+            if isBlocked:
+                embed.add_field(
+                    name = "",
+                    value = f"Image: (Blocked tags!) <{data['file_url']}>",
+                    inline = False
+                )
+            else:
+                embed.add_field(
+                    name = "",
+                    value = f"Image: {data['file_url']}",
+                    inline = False
+                )
+                embed.set_image(
+                    url = data['file_url']
+                )
+
+        # Basic Information
+        embed.set_footer(
+            text = f"Card ID: {card_id} ; Gelbooru ID: {data['id']} ; Uploader: {data['owner']}"
+        )
+
+
+        message = await interaction.edit_original_response(embed = embed)
+
+
+trash_emoji = "🗑️"
+
+@client.event
+async def on_raw_reaction_add(payload : discord.RawReactionActionEvent):
+    """ Handles reactions on messages even if the bot wasn't running when the message was sent. """
+    if payload.emoji.name == trash_emoji:
+        channel : discord.TextChannel
+        channel = client.get_channel(payload.channel_id)
+        message : discord.Message
+        message = await channel.fetch_message(payload.message_id)
+
+        if message.author.id == client.user.id and payload.user_id != client.user.id:
+            print("User is not bot!")
+            await message.delete()
+            print("Deleted message!")
 
 
 

@@ -7,7 +7,7 @@ is_phone = False
 
 # Please set here the time between each printing of the bot's ping. This is in seconds.
 #   - To disable it, set it to "-1"
-#   - Recommended for debugging: <=10
+#   - Recommended for debugging: <= "10"
 # Default: -1
 ping_delay = -1
 
@@ -28,3 +28,8 @@ is_debugging = True
 # Please set your preferred file size limit here. Please note that smaller file size limits result in worse quality. This is set in Megabytes, keep slightly lower than the actual limit.
 # Default: 9.8
 file_size_limit = 9.8
+
+# Please set here whether you wish to enable the Waifugame bot command(s).
+# If you use the Waifugame bot, this will give some utility commands for it.
+# Default: True
+enable_waifugame = True
