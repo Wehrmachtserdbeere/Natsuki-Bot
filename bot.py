@@ -6,7 +6,7 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT"
-__version__ = "2.3.21"
+__version__ = "2.3.22"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/S8zDGPmXYv"
@@ -1778,6 +1778,12 @@ if waifugame_enabled:
         ''' Check a Waifugame Card's ID (currently non-functional due to Waifugame incompetency) '''
         await interaction.response.defer()
 
+        result = check_user_in_blacklist(interaction.user.id, load_longterm_lists())
+        if result:
+            uid, reason = result
+            await interaction.response.send_message(f"Could not run command! User <@{uid}> is blacklisted.\nReason: {reason}.")
+            return
+
         # Prepare embed
         embed = discord.Embed()
 
@@ -1944,7 +1950,7 @@ async def bug_report(interaction : discord.Interaction, short_desc : str, steps_
     
     if result:
         uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        await interaction.response.send_message(f"Could not run command! User <@{uid}> is blacklisted.\nReason: {reason}.")
     else:
         await interaction.response.defer()
         embed = discord.Embed(title="Bug Report")

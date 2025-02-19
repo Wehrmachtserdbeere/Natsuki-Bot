@@ -99,29 +99,45 @@ An easy way to check ASCII art is to create a Python file that prints the ASCII,
 *Compatibility with the anything but the Windows 10 Command Prompt is **not** guaranteed!*
 
 ### Important: The ASCII art must **only** use UTF-8 characters!
-It will not work otherwise.
 
-If you wish to add your own ASCII art to the examples, open a suggestion issue, credit the original artist, and provide a screenshot of your console running either the bot or another program to display the ASCII art.
 
-Generally, keep its width to ~64 characters.
+#### Contributing ASCII Art to Examples
+
+- To add your own ASCII art to the examples, open a suggestion issue.  
+- Credit the original artist.  
+- Provide a screenshot of your console running either the bot or another program displaying the ASCII art.  
+- If the art was created using AI, explicitly state this. This includes both Text2Image and Image2Image methods.  
+- You do *not* need to disclose the use of AI tools such as brush smoothing, the "Line" tool, or similar.  
+- If your artwork falls under the "digital art" category but could be mistaken for "traditional art" (e.g., drawn on real paper with real brushes), you must clearly state that it is digital.
+
+Generally, keep its width to approximately 64 characters.
 
 ## Music
 
 The Music function is kinda buggy and still worked on.
 
-**Playlists do not work!** If you send the link to a playlist, it will only play the selected song. If you can fix this issue, please contact me and I will add your fix and add you to the credits!
+### **Playlists do not work!**
 
-If the bot starts acting up, examples include showing the wrong title, length, or thumbnail, you will have to restart the bot. That means the queue messed up and will inevitably start playing the wrong songs. Avoid requesting songs at the same time.
+- If you send the link to a playlist, it will only play the selected song. If you can fix this issue, please contact me and I will add your fix and add you to the credits!
 
-The Playlist command is slightly bugged, sometimes not showing the correct songs, or showing the song that is currently playing.
+- If the bot starts acting up, examples include showing the wrong title, length, or thumbnail, you will have to restart the bot. That means the queue messed up and will inevitably start playing the wrong songs. Avoid requesting songs at the same time.
 
-The skip command *should* work.
+- The Playlist command is slightly bugged, sometimes not showing the correct songs, or showing the song that is currently playing.
+
+- The skip command *should* work.
 
 Please be aware that this is a rudimentary solution to play YT stuff after all big bots removed the feature for an immature reason. (But hey, while you cannot play YouTube videos or get support for playing them, at least you can be a child predator on Discord without facing any problems! Some of the Discord Administrators even are some!)
 
-If you use the music modules, beware that the bot cannot play things that are blocked in your country. From my testing, it ~~can~~ **CAN NOT** play age-restricted videos. You might be able to bypass it, but I do not know how. You **can** bypass country restrictions by using a VPN however.
+- If you use the music modules, beware that the bot cannot play things that are blocked in your country. From my testing, it ~~can~~ **CAN NOT** play age-restricted videos. You might be able to bypass it, but I do not know how. You **can** bypass country restrictions by using a VPN however.
 
-If you use a Server, you will have to run the Server with a VPN. This way, you bypass most country restrictions.
+- If you use a Server, you will have to run the Server with a VPN. This way, you bypass most country restrictions.
+
+## Termux Notes
+
+- Because Termux uses a slightly different file system, the `webm_downloads` folder will be named `.\webm_downloads`. Because of this, it will be hidden by default. Consider using an app like **FX File Explorer** on Android to manually clear it out if it has been impacted by the disk leak that existed **prior to version 2.3.21**.
+- - If you have set up Termux for use prior to this, the location of this folder, using **FX File Explorer**, is as follows: `Home > [Your NatsukiBot Installation Directory] > .\webm_downloads`.
+
+- Termux will always be a lower priority than Windows, with other operating systems even further behind. However, since I also use Termux, compatibility is a top priority. Because of this, you can expect nearly the same level of compatibility on Termux as you do on PC.
 
 ## Dev notes
 
