@@ -6,7 +6,7 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT"
-__version__ = "2.3.20"
+__version__ = "2.3.21"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/S8zDGPmXYv"
@@ -1164,6 +1164,10 @@ class WebmConverter(commands.Cog):
                 # Make sure the file exists before sending
                 if os.path.exists(video_file_path):
                     await channel_obj.send(file=discord.File(video_file_path))
+                    os.remove(video_file_path)
+                    webm_path = Path(video_file_path).with_suffix('.webm')
+                    if os.path.exists(webm_path):
+                        os.remove(webm_path)
                 else:
                     print(f"Failed to locate converted file {video_file_path}")
 
