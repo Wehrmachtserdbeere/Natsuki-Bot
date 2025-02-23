@@ -6,7 +6,7 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT"
-__version__ = "2.3.22"
+__version__ = "2.3.23"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/S8zDGPmXYv"
@@ -1268,9 +1268,16 @@ firstsong = True
 #
 # ~ Strawb ^-^
 
+class AloneInVoiceChatException(Exception): ...
+class NotInVoiceChatException(Exception): ...
+
 @client.tree.command(name="play")
 async def _play(interaction: discord.Interaction, url: str):
-    ''' Play a song (must have URL) '''
+    '''
+    Play a song (must have URL)
+    
+    url: A string of the URL to the song. Example: `https://www.youtube.com/watch?v=dQw4w9WgXcQ`
+    '''
     await interaction.response.defer()
     try:
         # Make sure the User is in a voice channel
@@ -1308,10 +1315,23 @@ async def _play(interaction: discord.Interaction, url: str):
                     value = f"[{cur_songs_info[0]}]({url})\nTotal Length: {timedelta(seconds = cur_songs_info[1])}"
                 )
 
+                # If bot is the only one in the voice channel, it will not play.
+                if vc.channel.members == 1:
+                    raise AloneInVoiceChatException
+                # If the bot is not in a voice channel, it will not play either.
+                if [ member.id for member in vc.channel.members ] == [ client.user.id ]:
+                    raise NotInVoiceChatException
+                
                 await interaction.edit_original_response(embed = embed)
 
                 playnow = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(file, executable='ffmpeg', **ffmpeg_options))
-                vc.play(playnow)
+
+                # In the case that the user disconnects while starting the play command, the bot will gracefully handle the exception.
+                try:
+                    vc.play(playnow)
+                except discord.errors.ClientException:
+                    await interaction.edit_original_response(content="Not connected to voice.")
+                
                 while vc.is_playing():
                     await asyncio.sleep(0.5)
                 await play_next(interaction)
@@ -1347,8 +1367,10 @@ async def _play(interaction: discord.Interaction, url: str):
         await interaction.edit_original_response(content = "Permission err- wait what? Yea... \"Permission Error\". Huh.")
     except yt_dlp.DownloadError:
         await interaction.edit_original_response(content = "Video unavailable. Most likely because this content is age-restricted or not available in the host country.\nComplain to YouTube about this, I cannot fix this.")
-    #except Exception as e:
-    #    await interaction.edit_original_response(content = "Error: " + str(e))
+    except AloneInVoiceChatException:
+        await interaction.edit_original_response(content = "I'm alone in the voice channel. I'm not playing for myself.")
+    except NotInVoiceChatException:
+        await interaction.edit_original_response(content = "I'm not in a voice channel. *Where* do you expect me to play anything?")
     except OSError:
         await interaction.edit_original_response(content = "An error occoured, please try again.")
 
@@ -1481,36 +1503,63 @@ async def _disconnect(interaction: discord.Interaction):
 skipped = False
 
 async def play_next(interaction : discord.Interaction):
-    vc: discord.VoiceClient
-    vc = interaction.guild.voice_client
-    if songs_list:
-        if vc.is_playing():
-            vc.stop()
-        playnow = songs_list[0]
-        file = search(playnow)[1]
+    try:
+        vc: discord.VoiceClient
+        vc = interaction.guild.voice_client
+        if songs_list:
+            if vc.is_playing():
+                vc.stop()
+            playnow = songs_list[0]
+            file = search(playnow)[1]
 
-        cur_songs_info = get_video_info(playnow)
+            cur_songs_info = get_video_info(playnow)
 
-        embed = discord.Embed(
-            title = "Natsukibot - Playlist",
-            color = discord.Color.from_rgb(r = 255, g = 0, b = 200)
-        )
-        embed.set_thumbnail(url = cur_songs_info[2])
-        embed.add_field(
-            name = f"Now playing:",
-            value = f"[{cur_songs_info[0]}]({playnow})\nTotal Length: {timedelta(seconds = cur_songs_info[1])}"
-        )
+            embed = discord.Embed(
+                title = "Natsukibot - Playlist",
+                color = discord.Color.from_rgb(r = 255, g = 0, b = 200)
+            )
+            embed.set_thumbnail(url = cur_songs_info[2])
+            embed.add_field(
+                name = f"Now playing:",
+                value = f"[{cur_songs_info[0]}]({playnow})\nTotal Length: {timedelta(seconds = cur_songs_info[1])}"
+            )
 
-        await interaction.channel.send(embed = embed)
+            # If bot is the only one in the voice channel, it will not play.
+            if vc.channel.members == 1:
+                raise AloneInVoiceChatException
+            # If the bot is not in a voice channel, it will not play either.
+            if [ member.id for member in vc.channel.members ] == [ client.user.id ]:
+                raise NotInVoiceChatException
 
-        remove_from_playlist(songs_list, songs_list[0])
-        playnow = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(file, executable='ffmpeg', **ffmpeg_options))
-        vc.play(playnow)
-        while vc.is_playing():
-            await asyncio.sleep(0.5)
-        await play_next(interaction)
-    else:
-        await interaction.channel.send(content = "Finished playing.")
+            await interaction.channel.send(embed = embed)
+
+            remove_from_playlist(songs_list, songs_list[0])
+            playnow = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(file, executable='ffmpeg', **ffmpeg_options))
+
+            # In the case that the user disconnects while starting the play command, the bot will gracefully handle the exception.
+            try:
+                vc.play(playnow)
+            except discord.errors.ClientException:
+                await interaction.edit_original_response(content="Not connected to voice.")
+                return
+
+            while vc.is_playing():
+                await asyncio.sleep(0.5)
+            await play_next(interaction)
+        else:
+            await interaction.channel.send(content = "Finished playing.")
+    except discord.errors.HTTPException:
+        await interaction.channel.send(content = "File too large, try again.")
+    except PermissionError:
+        await interaction.channel.send(content = "Permission error... Weird.")
+    except yt_dlp.DownloadError:
+        await interaction.channel.send(content = "Video unavailable. Most likely because this content is age-restricted or not available in the host country.\nComplain to YouTube about this, I cannot fix this.")
+    except AloneInVoiceChatException:
+        await interaction.channel.send(content = "I'm alone in the voice channel. I'm not playing for myself.")
+    except NotInVoiceChatException:
+        await interaction.channel.send(content = "I'm not in a voice channel. *Where* do you expect me to play anything?")
+    except OSError:
+        await interaction.channel.send(content = "An error occoured, please try again.")
 
 
 
@@ -2075,11 +2124,40 @@ async def blacklist_remove(interaction: discord.Interaction, user_id: discord.Me
         await interaction.followup.send("You're not recognized as a Natsukian. You can't add people to the blacklist.")
         
 
-#
 async def print_latency(client):
     while True:
         print(f"Current ping: {(client.latency * 100):.3f}")
         await asyncio.sleep(ping_delay)
+
+
+@client.event
+async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+    await client.wait_until_ready()
+    if member.id == client.user.id:
+        return
+
+    # Check if the bot is in a voice channel
+    if before.channel is not None:
+        vc_channel: discord.VoiceChannel = before.channel
+    else:
+        vc_channel: discord.VoiceChannel = after.channel
+
+    # If the bot is in the voice channel (if client's user ID is in the list of member IDs)
+    if client.user.id in [member.id for member in vc_channel.members]:
+        # If there are no members in the voice channel apart from the bot
+        if len(vc_channel.members) == 1:
+            vc: discord.VoiceClient = vc_channel.guild.voice_client
+            if vc is None:
+                return  # Bot is not connected to a voice channel
+
+            if vc.is_playing():
+                # Run a loop until the bot finishes playing
+                while vc.is_playing():
+                    await asyncio.sleep(1)
+                await vc.disconnect()
+            else:
+                # Disconnect the bot immediately
+                await vc.disconnect()
 
 
 @client.event
@@ -2112,6 +2190,7 @@ async def on_ready():      # Check if it runs
         print(f"Choose image <<{image_id}>>")
         print(image_data["logo"])
         print(f"{image_ascii}")
+
 
 print("Please wait a few seconds for the bot to connect")
 
