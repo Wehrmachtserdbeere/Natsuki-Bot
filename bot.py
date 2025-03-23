@@ -6,7 +6,7 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT"
-__version__ = "2.3.23"
+__version__ = "2.3.24"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/S8zDGPmXYv"
@@ -917,7 +917,6 @@ async def on_message(message: discord.Message):
     has_embed = False
 
     if links:
-
         twitter_alt = "https://vxtwitter.com"
         tiktok_alt = "https://vxtiktok.com"
         instagram_alt = "https://www.kkinstagram.com"
@@ -927,58 +926,37 @@ async def on_message(message: discord.Message):
         replacements = {
             "https://x.com": twitter_alt,
             "https://www.x.com": twitter_alt,
-            "www.x.com": twitter_alt,
             "https://twitter.com": twitter_alt,
             "https://www.twitter.com": twitter_alt,
-            "www.twitter.com": twitter_alt,
             "https://fxtwitter.com": twitter_alt,
-            "https://www.fxtwitter.com": twitter_alt, # Creator of fxTwitter has/had report bots
-            "www.fxtwitter.com": twitter_alt,
+            "https://www.fxtwitter.com": twitter_alt,  # Creator of fxTwitter has/had report bots
             "https://tiktok.com": tiktok_alt,
             "https://www.tiktok.com": tiktok_alt,
-            "www.tiktok.com": tiktok_alt,
-            "www.instagram.com": instagram_alt,
             "https://instagram.com": instagram_alt,
             "https://www.instagram.com": instagram_alt,
             "https://pixiv.net": pixiv_alt,
             "https://www.pixiv.net": pixiv_alt,
-            "www.pixiv.net": pixiv_alt,
             "https://youtube.com/shorts/": youtube_alt,
             "https://www.youtube.com/shorts/": youtube_alt,
-            "www.youtube.com/shorts/": youtube_alt,
             "https://youtu.be/": youtube_alt,
             "https://www.youtu.be/": youtube_alt,
-            "www.youtu.be/": youtube_alt,
         }
-
-        # Collect the replacement domains
-        modified_domains = {replacement.split('/')[0] for replacement in replacements.values()}
 
         final_list = []
         for link in links:
-            # Extract the domain name from the link
-            domain_match = re.search(r"https?://(?:www\.)?([\w.-]+)/", link)
-            if domain_match:
-                has_embed = False
-                full_domain = domain_match.group(1)
+            # Perform replacements
+            for original, replacement in replacements.items():
+                if link.startswith(original):
+                    final_list.append(link.replace(original, replacement, 1))  # Replace only the first occurrence
+                    has_embed = True
+                    break
 
-                # Skip if the full domain is already a modified one or in the excluded domains
-                if full_domain in modified_domains or full_domain in excluded_domains:
-                    continue
+        # Remove embeds from the original message
+        if has_embed:
+            await asyncio.sleep(1)
+            message = await message.channel.fetch_message(message.id)
+            await message.edit(suppress=True)
 
-                # Perform replacements
-                for original, replacement in replacements.items():
-                    if original in link:
-                        final_list.append(link.replace(original, replacement))
-                        has_embed = True
-                        break
-                
-                # Remove embeds from the original message
-                if has_embed:
-                    await asyncio.sleep(1)
-                    message = await message.channel.fetch_message(message.id)
-                    await message.edit(suppress=True)
-        
         # Only send the first post
         if final_list:
             await message.channel.send(final_list[0])
