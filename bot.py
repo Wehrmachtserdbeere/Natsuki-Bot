@@ -910,18 +910,30 @@ async def on_message(message: discord.Message):
 
     # List of domains to exclude from processing
     excluded_domains = [
-        "fixvx.com"
+        
     ]
 
     links = re.findall(r"https?://(?:www\.)?[\w.-]+/[\S]*", message.content)
     has_embed = False
 
     if links:
-        twitter_alt = "https://vxtwitter.com"
+        twitter_alt = "https://niggerx.com" # Couldn't find a different alternative
         tiktok_alt = "https://vxtiktok.com"
         instagram_alt = "https://www.kkinstagram.com"
         pixiv_alt = "https://phixiv.net"
         youtube_alt = "https://youtube.com/watch?v="
+
+        ###
+        ### Quick info
+        ###
+        ### VXTwitter now adds garbage political data to
+        ### the stuff it processes. E.g. you can see someone
+        ### say the hard-R N-Word, and have a happy little
+        ### 41-er emoji added to it.
+        ###
+        ### As of March 31st, 2025, VXTiktok is not
+        ### compromised.
+        ###
 
         replacements = {
             "https://x.com": twitter_alt,
@@ -930,6 +942,8 @@ async def on_message(message: discord.Message):
             "https://www.twitter.com": twitter_alt,
             "https://fxtwitter.com": twitter_alt,
             "https://www.fxtwitter.com": twitter_alt,  # Creator of fxTwitter has/had report bots
+            "https://vxtwitter.com": twitter_alt,
+            "https://www.vxtwitter.com": twitter_alt,  # Creator of vxTwitter adds garbage political data to posts
             "https://tiktok.com": tiktok_alt,
             "https://www.tiktok.com": tiktok_alt,
             "https://instagram.com": instagram_alt,
