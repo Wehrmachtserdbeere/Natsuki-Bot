@@ -6,11 +6,11 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT"
-__version__ = "2.3.24"
+__version__ = "2.3.25"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
-__support_discord__ = "https://discord.gg/S8zDGPmXYv"
-__invite_link__ = "https://discord.com/api/oauth2/authorize?client_id=883082974252384277&permissions=8&scope=bot"
+__support_discord__ = "https://discord.gg/9EAGVZUt2Y" # EDIT THIS
+__invite_link__ = "https://discord.com/api/oauth2/authorize?client_id=883082974252384277&permissions=8&scope=bot" # EDIT THIS
 
 # bot.py
 
@@ -81,27 +81,39 @@ print(f"Bot Started at {time_now}")
 client = commands.Bot(
     command_prefix="n!",
     description="A bot of the best character in DDLC!",
+    status=discord.Status.online,
     case_insensitive=True,
     intents=discord.Intents.all()
     )
 
-mp3_path = list(Path("D:\\Alles\\Alle Musik und Videos\\RR\\").rglob("*.mp3")) # <-- EDIT this to whatever folder your music is in.
+mp3_path = list(Path("D:\\Alles\\Alle Musik und Videos\\RR\\").rglob("*.mp3")) # <-- EDIT this to whatever folder your RR music is in.
 folders = [
-    "D:\\Alles\\Alle Musik und Videos\\RR under 8MB\\", # <-- EDIT this to your RR music. Feel free to find meaning behind "RR".
+    "D:\\Alles\\Alle Musik und Videos\\RR under 8MB\\", # <-- EDIT this to your RR music. RR = Real Rock.
     ""
 ]
+
+# For on_ready, so it only creates one single task.
+has_started = False
 
 @client.command()
 @commands.guild_only()
 @commands.is_owner()
 @app_commands.default_permissions(manage_messages=True)
 async def sync(
+    interaction: discord.Interaction,
     ctx: Context,
     guilds: Greedy[discord.Object],
     spec: Optional[Literal["~", "*", "^"]] = None) -> None:
     """
-    Manually sync the bot
+    Manually sync the bot (True Natsukian only command)
     """
+    if not check_user_is_true_natsukian(interaction.user.id, load_longterm_lists()):
+        interaction.channel.send(
+            content = "Cannot use command, you are not a Bot Admin.",
+            delete_after = 5
+            )
+        return
+    
     if not guilds:
         if spec == "~":
             synced = await ctx.bot.tree.sync(guild=ctx.guild)
@@ -138,6 +150,11 @@ def shorten(string):
     return string.replace(" ", "_")
 
 ### Music
+
+activity_json_file_path = "./activity_texts.json" # <-- EDIT this to your own path!
+
+with open(activity_json_file_path, encoding = "utf8") as file:
+    activity_text_data = json.load(file)
 
 ffmpeg_options = {
     "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
@@ -204,29 +221,104 @@ print("Initializing...")
 
 # Load blacklist data from a JSON file
 def load_longterm_lists(filename="./longterm_lists.json"):
+    '''Load data from a file.'''
     with open(filename, 'r') as file:
         return json.load(file)
 
 # Check if user is in blacklist and return details
-def check_user_in_blacklist(user_id, blacklist_data):
+def check_user_in_blacklist(user_id, blacklist_data) -> str | bool:
+    '''Returns user ID if found. Else returns a bool "False".'''
     for entry in blacklist_data['blacklist']:
         if entry['uid'] == user_id:
             return entry['uid'], entry['reason']
     return False
 
+# Check if True Natsukian
+def check_user_is_true_natsukian(userid : int, natsukian_data : json) -> str | bool:
+    '''Returns user ID if found. Else returns a bool "False"'''
+    for entry in natsukian_data['true_natsukians']:
+        if str(entry) == str(userid):
+            return str(entry)
+    return False
+
 # Save data to JSON file
 def save_data(data, filename="./longterm_lists.json"):
+    '''Save data to a JSON file.'''
     with open(filename, 'w') as file:
         json.dump(data, file, indent=4)
 
-# Check if owner
-def check_user_is_owner(user_id):
-    longterm_list = load_longterm_lists
-    for entry in longterm_list['true_natsukians']:
-        if entry == user_id:
-            return True
-    return False
+# For activity-related things. Discord shows "status" to users, despite it being Activities.
+class NatsukiActivity:
+    '''Represents a collection of activity-related things.'''
+    
+    async def set_random_activity(activity_text_data : str):
+        '''Set a random activity, defaults to "Chilling" if "activity_text_data" is faulty.'''
+        try:
+            activity_text = random.choice(activity_text_data["default"])
+            activity = discord.CustomActivity(
+                type = discord.ActivityType.custom,
+                name = "Custom Status", # Does nothing, but is required.
+                state = activity_text,
+            )
+            await client.change_presence(
+                activity = activity
+            )
+        except:
+            activity = discord.CustomActivity(
+                type = discord.ActivityType.custom,
+                name = "Custom Status", # Does nothing, but is required.
+                state = "Chilling",
+            )
+            await client.change_presence(
+                activity = activity
+            )
+    
+    async def set_voice_activity(activity_text_data : str):
+        '''Sets a random voice-related activity'''
+        try:
+            activity_text = random.choice(activity_text_data["voice"])
+            activity = discord.CustomActivity(
+                type = discord.ActivityType.custom,
+                name = "Custom Status", # Does nothing, but is required.
+                state = activity_text,
+            )
+            await client.change_presence(
+                activity = activity
+            )
+        except:
+            activity = discord.CustomActivity(
+                type = discord.ActivityType.custom,
+                name = "Custom Status", # Does nothing, but is required.
+                state = "Speaking",
+            )
+            await client.change_presence(
+                activity = activity
+            )
+    
+    async def set_streaming_activity(activity_text_data : str):
+        '''Sets a random streaming-related (i.E. streaming music) activity'''
+        try:
+            activity_text = random.choice(activity_text_data["streaming"])
+            activity = discord.CustomActivity(
+                type = discord.ActivityType.custom,
+                name = "Custom Status", # Does nothing, but is required.
+                state = activity_text,
+            )
+            await client.change_presence(
+                activity = activity
+            )
+        except:
+            activity = discord.CustomActivity(
+                type = discord.ActivityType.custom,
+                name = "Custom Status", # Does nothing, but is required.
+                state = "Streaming",
+            )
+            await client.change_presence(
+                activity = activity
+            )
 
+# Because I often accidentally write the wrong name.
+NatsukiStatus = NatsukiActivity
 
 @client.tree.command(name="cute")                                                   # n!you_are_cute
 async def you_are_cute(interaction: discord.Interaction) -> None:
@@ -268,7 +360,7 @@ if not is_phone:
             await interaction.response.send_message(file=discord.File(imgimg))
 
 
-    @client.tree.command(name="shdf")                                   # Get image <-- Can ignore unless you find a meaning behind "shdf".
+    @client.tree.command(name="shdf")                                   # Get image <-- Can ignore unless you find a meaning behind "shdf", I don't remember.
     async def shdf(interaction: discord.Interaction):
         """ Send an SHDF image """
 
@@ -379,7 +471,7 @@ if not is_phone:
                 await interaction.followup.send("Permission denied; Folder was auto-blocked, please try again.")
     
 
-    @client.tree.command(name="rr")
+    @client.tree.command(name="rr")                                       # EDIT this away if you don't have RR or NS music. RR here means Real Rock, and I forgot what NS stood for.
     async def rr(interaction: discord.Interaction):
         """ Get a NS song (Most likely German) """
         blacklist_data = load_longterm_lists()
@@ -392,9 +484,7 @@ if not is_phone:
         else:
             await interaction.response.defer()
             try:
-                #mp3 = "D:\\Alles\\Alle Musik und Videos\\RR under 8MB\\" + random.choice(os.listdir("D:\\Alles\\Alle Musik und Videos\\RR under 8MB\\"))
                 mp3 = random.choice(mp3_path)
-                #print(f'RR Requested | Song: {mp3}')
                 try:
                     audiofile = eyed3.load(mp3)
                     try:
@@ -410,12 +500,11 @@ if not is_phone:
                     except AttributeError:
                         audAlbum = "Unknown Album"
                     await interaction.followup.send(f"Song: {audTitle} | Artist: {audArt} | Album: {audAlbum}", file=discord.File(mp3))
-                    #await interaction.followup.send(f"Song: {audTitle} | Artist: {audArt} | Album: {audAlbum}")
                     print(f"RR music -- {mp3}")
                 except discord.errors.HTTPException:
                     await interaction.followup.send("File too large, try again.")
                 except PermissionError:
-                    await interaction.followup.send("Permission denied; Folder was probably auto-blocked because of lewdness, please try again.")
+                    await interaction.followup.send("Permission denied; Folder was probably auto-blocked.")
             except OSError:
                 await interaction.followup.send("An error occoured, please try again.")
 
@@ -1320,8 +1409,10 @@ async def _play(interaction: discord.Interaction, url: str):
 
                 # In the case that the user disconnects while starting the play command, the bot will gracefully handle the exception.
                 try:
-                    vc.play(playnow)
+                    await NatsukiActivity.set_streaming_activity(activity_text_data)
+                    vc.play(playnow, after = lambda x: asyncio.run(NatsukiActivity.set_voice_activity(activity_text_data)))
                 except discord.errors.ClientException:
+                    asyncio.run(NatsukiActivity.set_voice_activity(activity_text_data))
                     await interaction.edit_original_response(content="Not connected to voice.")
                 
                 while vc.is_playing():
@@ -1491,7 +1582,7 @@ async def _disconnect(interaction: discord.Interaction):
 
 
 
-
+is_playing = False
 skipped = False
 
 async def play_next(interaction : discord.Interaction):
@@ -1531,6 +1622,8 @@ async def play_next(interaction : discord.Interaction):
             # In the case that the user disconnects while starting the play command, the bot will gracefully handle the exception.
             try:
                 vc.play(playnow)
+                if not is_playing:
+                    await NatsukiActivity.set_streaming_activity(activity_text_data)
             except discord.errors.ClientException:
                 await interaction.edit_original_response(content="Not connected to voice.")
                 return
@@ -1540,6 +1633,8 @@ async def play_next(interaction : discord.Interaction):
             await play_next(interaction)
         else:
             await interaction.channel.send(content = "Finished playing.")
+            await NatsukiActivity.set_voice_activity(activity_text_data)
+
     except discord.errors.HTTPException:
         await interaction.channel.send(content = "File too large, try again.")
     except PermissionError:
@@ -1576,8 +1671,9 @@ async def skip(interaction : discord.Interaction):
         vc = interaction.guild.voice_client
         if vc.is_playing():
             vc.stop()
+            await NatsukiActivity.set_voice_activity(activity_text_data)
     except Exception as e:
-        await interaction.followup.send(content = "Error! Something happened! \n" + str(e))
+        await interaction.followup.send(content = "Error! Something happened!\n" + str(e))
 
 
 
@@ -1610,7 +1706,7 @@ async def embedtest(interaction : discord.Interaction):
 
 @client.tree.command(name="rr_play")
 async def rr_play(interaction : discord.Interaction):
-    ''' Play a song from my private collection '''
+    ''' Play a song from my private collection ''' # <-- EDIT with your flavor text
     blacklist_data = load_longterm_lists()
     user_id = str(interaction.user.id)  # Convert user ID to string
     result = check_user_in_blacklist(user_id, blacklist_data)
@@ -1622,13 +1718,11 @@ async def rr_play(interaction : discord.Interaction):
         await interaction.response.defer()
         try:
             channel = interaction.user.voice.channel
-            print("Arrived here 0.5")
             if interaction.guild.voice_client == None:
                 await channel.connect(self_mute = False, self_deaf = True)
             vc = interaction.guild.voice_client
             if interaction.user.voice is None:
                 interaction.edit_original_response(content = 'Hey, doofus, you\'re not in a voice channel! Join one first and *ten* ask me to play something!')
-            print("Arrived here 0.75")
             mp3 = random.choice(mp3_path)
             try:
                 print("Arrived here 1")
@@ -1654,16 +1748,12 @@ async def rr_play(interaction : discord.Interaction):
 
                 stdout, stderr = await process.communicate()
 
-                print("Arrived here 2")
-                print(mp3)
                 await interaction.edit_original_response(content = f"Song: {audTitle} | Artist: {audArt} | Album: {audAlbum}")
-                print("Arrived here 3")
 
                 song = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(mp3))
 
-                vc.play(song, after=lambda x: print("Done"))
-
-                print(f"FFmpeg stderr: {stderr.decode()}")
+                await NatsukiActivity.set_streaming_activity(activity_text_data)
+                vc.play(song, after=lambda x: asyncio.run(NatsukiActivity.set_voice_activity(activity_text_data)))
 
             except discord.errors.HTTPException:
                 await interaction.edit_original_response(content = "File too large, try again.")
@@ -1681,8 +1771,8 @@ async def about_me(interaction : discord.Interaction, complexity : Literal['Simp
     embed = discord.Embed(colour = 0xff00cc, title = "Natsuki Bot", timestamp = datetime.now())
     embed.set_thumbnail(url = "https://img3.gelbooru.com/images/dc/b0/dcb07993482d9b81ab3d521c7d0d504a.jpg") # <-- EDIT this to your desired thumbnail
     embed.add_field(name = "Author:", value = f"[{__author__}](https://wehrmachtserdbeere.github.io/)", inline = False) # <-- EDIT this to your website
-    embed.add_field(name = "Support:", value = f"[Support Server](https://discord.gg/S8zDGPmXYv)", inline = False) # <-- EDIT this to your support site.
-    embed.add_field(name = "Invite:", value = __invite_link__, inline = False) # <-- EDIT this to your bot invite link.
+    embed.add_field(name = "Support:", value = f"[Support Server]({__support_discord__})", inline = False)
+    embed.add_field(name = "Invite:", value = __invite_link__, inline = False)
     if complexity == 'Complex':
         embed.add_field(name = "Python Version:", value = f"`{sys.version}`", inline = False)
         embed.add_field(name = "Discord.py Version:", value = f"`{version('discord')}`", inline = False)
@@ -2125,6 +2215,7 @@ async def print_latency(client):
 @client.event
 async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
     await client.wait_until_ready()
+
     if member.id == client.user.id:
         return
 
@@ -2136,25 +2227,30 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
 
     # If the bot is in the voice channel (if client's user ID is in the list of member IDs)
     if client.user.id in [member.id for member in vc_channel.members]:
-        # If there are no members in the voice channel apart from the bot
-        if len(vc_channel.members) == 1:
+        # If there are no members in the voice channel apart from the bot. BOT IS COUNTED! Aka. size is "1" if bot is still in.
+        if len(vc_channel.members) < 2:
             vc: discord.VoiceClient = vc_channel.guild.voice_client
             if vc is None:
+                await NatsukiActivity.set_random_activity(activity_text_data)
                 return  # Bot is not connected to a voice channel
 
             if vc.is_playing():
                 # Run a loop until the bot finishes playing
                 while vc.is_playing():
                     await asyncio.sleep(1)
+                await NatsukiActivity.set_random_activity(activity_text_data)
                 await vc.disconnect()
             else:
                 # Disconnect the bot immediately
+                await NatsukiActivity.set_random_activity(activity_text_data)
                 await vc.disconnect()
 
 
 @client.event
 async def on_ready():      # Check if it runs
     
+    global has_started
+
     # Print Guilds connected
     if print_guilds_connected:
         num = 0
@@ -2167,10 +2263,16 @@ async def on_ready():      # Check if it runs
             )
             num += 1
     
+    if (has_started := has_started) is None:
+        has_started = False
+
     # Print latency every 30 seconds
     # Don't do if disabled (set to -1)
-    if not ping_delay == -1:
-        asyncio.create_task(print_latency(client))
+    if not has_started:
+        await NatsukiActivity.set_random_activity(activity_text_data)
+        if not ping_delay == -1:
+            asyncio.create_task(print_latency(client))
+            has_started = True
 
     # Print ASCII image of Natsuki
     if enable_ascii:

@@ -1,54 +1,60 @@
+
 # Natsuki Bot
 
 ## Installation
 
 1. Clone the repository or download the source directly and put it into a folder with nothing else inside.
 2. Create and fill these files:
-- `botToken.py`
-- `longterm_lists.json`
-3. If you run this via termux, you **have** to run these commands in this order:
-    
-    `pkg install python pip`
+   - `botToken.py`
+   - `longterm_lists.json`
+3. If you run this via Termux, you **must** run these commands in this order:
 
-    `pkg install binutil`
+    ```
+    pkg install python pip
+    pkg install binutil
+    pkg install python-tkinter
+    pkg install clang python libffi openssl libsodium
+    SODIUM_INSTALL=system pip install pynacl
+    ```
 
-    `pkg install python-tkinter`
+    Please make sure to go into `settings.py` and change `is_phone` to `True`.
 
-    `pkg install clang python libffi openssl libsodium`
+4. If using Command Prompt, go to the bot directory and run the following command:
 
-    `SODIUM_INSTALL=system pip install pynacl`
+    ```
+    pip install -r requirements.txt
+    ```
 
-    Please make sure to go into `settings.py` and change `is_phone` to `True`
+    This should install the required modules for the bot.
 
-4. Using Command Prompt, go to the bot directory and run the following command:
-	
-    `pip install -r requirements.txt`
-	
-    This should install the modules required to run the bot.
+5. Set up the environment (Guaranteed to work in Python 3.12.3).
+6. Edit the bot (More information below).
+7. Run the bot.
 
-5. Set up the environment (Guaranteed to work in Python 3.12.3)
-6. Edit the bot (More information below)
-7. Run the bot
 
-**What you will put into each file:**
-`botToken.py`
+### **What you will put into each file:**
+
+#### `botToken.py`
+
 ```py
 botToken = "your.bot.token"
 ```
+
 To get your Bot Token:
-1. Go to the [Discord Developer Portal](https://discordapp.com/developers/applications/)
-2. Give Your Bot a Name
-3. Go into the **Bot** menu
-4. Press **Add Bot**
-5. Press **Click to Reveal Token** and voilà you have your Bot Token.
+1. Go to the [Discord Developer Portal](https://discordapp.com/developers/applications/).
+2. Give your bot a name.
+3. Go into the **Bot** menu.
+4. Press **Add Bot**.
+5. Press **Click to Reveal Token** - this is your Bot Token.
 
-**Do not share your Bot Token!**  
+**Do not share your Bot Token!**
 
-`longterm_lists.json`
+#### `longterm_lists.json`
+
 ```json
 {
     "true_natsukians": [
-        "Put your own User ID here. This is used for Administrators who can use commands like adding and removing people from the blacklist.",
+        "Put your own User ID here. This is used for Administrators who can use commands like adding and removing people from the blacklist."
     ],
     "blacklist": [],
     "whitelist": []
@@ -59,86 +65,85 @@ That's all for this file. It may be replaced with an optional globally shared bl
 
 ## Edit the Bot
 
-You will have to edit the bot, otherwise several commands will be bugged and not work. To find what you have to edit:
-1. Use the Search function for the word `EDIT`
-2. Follow the steps provided
+You **must** edit the bot, otherwise, several commands will be bugged and non-functional. To find what you need to edit:
 
-Alternatively you can comment out (or remove) commands you don't need/want. For documentation on DiscordPy, please head over to the [Official Discord.py Documentaton](https://discordpy.readthedocs.io/en/stable/api.html)
+1. Use the search function inside `bot.py` for the word `EDIT`.
+2. Follow the steps provided in the comments.
+
+Alternatively, you can comment out or remove commands you don't need. For documentation on DiscordPy, refer to the [Official Discord.py Documentation](https://discordpy.readthedocs.io/en/stable/api.html).
 
 ## Reporting Bugs
 
-If it is related to the bot itself, please search if your issue is solved or open, if not then please open an issue on GitHub.
-If you want your Users to be able to send you bug reports, they can use the command `/bug_report` if you set it up. You can also disable this command, or use it as a rudimentary non-anonymous reporting tool.
+If the issue is related to the bot itself, check if your issue is already open or solved. If not, open a new issue on GitHub.
+
+Alternatively, visit the [Strawberry Games / Strawberry Software Server](https://discord.gg/9EAGVZUt2Y) for support.
+
+If you want your users to send bug reports, they can use the `/bug_report` command (if set up). You can disable this command or use it as a simple non-anonymous reporting tool.
 
 ## Supporting the Bot
 
-If you have improvements for the bot, feel free to contact me on Discord or GitHub. We can discuss the changes and fixes. If these changes/fixes are added to the official bot, you will be credited.
+If you have improvements for the bot, feel free to contact me on Discord or GitHub. We can discuss changes and fixes. If your contributions are added to the official bot, you will be credited.
 
-Please refrain from contact me if you are planning to add your political, religious, or other ideological things to the bot. Your changes may be considered, but this chance is lowered if you add politics, religion, or similar. Clean up the code and then you will be good to go.
+Please **do not** contact me if your changes include political, religious, or ideological additions. They may be considered, but the likelihood is lower if they include such elements. Clean up the code first.
 
-*If you decide to make a bot like that derived from this bot, I kindly request you to not use the Natsuki name or imagery with it.*
+*If you decide to make a bot derived from this, I kindly request that you do not use the "Natsuki" name or imagery.*
 
 ## Images / ASCII Art
 
 When starting the bot, you may see ASCII image art. You can remove this by setting `enable_ascii` to `False` inside `settings.py`.
 
-Similarly, you can add more art by following the JSON file format, and adding your own ASCII art. The JSON is stuctured as follows:
+You can also add more ASCII art by following the JSON file format and adding your own art. The JSON structure is as follows:
 
-| `"logo"` (This is just the logo. It has no additional properties apart from `"logo"`)
+- `"logo"` (This is just the logo. No additional properties apart from `"logo"`.)
+- `"natsukis"` (An array of objects—ASCII images and their IDs.)
+  - `"id"` (A unique identifier, useful for debugging.)
+  - `"image"` (Where the ASCII art is stored and displayed.)
 
-| `"natsukis"` (This is an array of Objects - the images and their IDs.)
+To check ASCII art, create a Python file that prints the ASCII and run it in Command Prompt.
 
-| | Object (Because the objects do not have specific names, this stand-in name is used.)
+**Compatibility with anything other than Windows 10 Command Prompt is **not** guaranteed!**
 
-| | `"id"` (This is the **id**entifier property, which is useful for debugging in case a printed ASCII art is incorrectly displayed.)
+### **Important:** The ASCII art must **only** use UTF-8 characters!
 
-| | `"image"` (This is the property where the ASCII art is stored. To display the ASCII, this property is called.)
+#### **Contributing ASCII Art to Examples**
 
-An easy way to check ASCII art is to create a Python file that prints the ASCII, then opening the Python file inside Command Prompt.
+- Open a suggestion issue to add your ASCII art. You can also do this on the [Support Server](https://discord.gg/9EAGVZUt2Y).
+- Credit the original artist.
+- Provide a screenshot of your console displaying the ASCII.
+- If the art was generated using AI (Text2Image or Image2Image), explicitly state this.
+- You **do not** need to disclose AI tools like brush smoothing or line tools.
+- If your digital art could be mistaken for traditional, clarify that it is digital.
 
-*Compatibility with the anything but the Windows 10 Command Prompt is **not** guaranteed!*
-
-### Important: The ASCII art must **only** use UTF-8 characters!
-
-
-#### Contributing ASCII Art to Examples
-
-- To add your own ASCII art to the examples, open a suggestion issue.  
-- Credit the original artist.  
-- Provide a screenshot of your console running either the bot or another program displaying the ASCII art.  
-- If the art was created using AI, explicitly state this. This includes both Text2Image and Image2Image methods.  
-- You do *not* need to disclose the use of AI tools such as brush smoothing, the "Line" tool, or similar.  
-- If your artwork falls under the "digital art" category but could be mistaken for "traditional art" (e.g., drawn on real paper with real brushes), you must clearly state that it is digital.
-
-Generally, keep its width to approximately 64 characters.
+Keep the width around **64 characters**.
 
 ## Music
 
-The Music function is kinda buggy and still worked on.
+The music function is **buggy** and still in development.
 
 ### **Playlists do not work!**
 
-- If you send the link to a playlist, it will only play the selected song. If you can fix this issue, please contact me and I will add your fix and add you to the credits!
+- If you send a playlist link, only the selected song will play. If you can fix this, contact me, and I'll credit your fix.
+- If the bot shows incorrect titles, lengths, or thumbnails, restart the bot. The queue is likely messed up. Avoid requesting multiple songs simultaneously.
+- The Playlist command may sometimes show incorrect songs or fail to update properly.
+- The skip command **should** work.
 
-- If the bot starts acting up, examples include showing the wrong title, length, or thumbnail, you will have to restart the bot. That means the queue messed up and will inevitably start playing the wrong songs. Avoid requesting songs at the same time.
+This is a rudimentary solution after major bots removed YouTube playback for an immature reason. *(But hey, while you can’t play YouTube videos anymore, at least you can be a child predator on Discord without facing any problems! Some of the Discord Administrators even are those!)*
 
-- The Playlist command is slightly bugged, sometimes not showing the correct songs, or showing the song that is currently playing.
-
-- The skip command *should* work.
-
-Please be aware that this is a rudimentary solution to play YT stuff after all big bots removed the feature for an immature reason. (But hey, while you cannot play YouTube videos or get support for playing them, at least you can be a child predator on Discord without facing any problems! Some of the Discord Administrators even are some!)
-
-- If you use the music modules, beware that the bot cannot play things that are blocked in your country. From my testing, it ~~can~~ **CAN NOT** play age-restricted videos. You might be able to bypass it, but I do not know how. You **can** bypass country restrictions by using a VPN however.
-
-- If you use a Server, you will have to run the Server with a VPN. This way, you bypass most country restrictions.
+- The bot **cannot** play age-restricted videos. There may be a way to bypass this, but I don’t know how.
+- **Country-restricted videos can be bypassed with a VPN.**
+- If you're running the bot on a server, use a VPN to bypass country restrictions.
 
 ## Termux Notes
 
-- Because Termux uses a slightly different file system, the `webm_downloads` folder will be named `.\webm_downloads`. Because of this, it will be hidden by default. Consider using an app like **FX File Explorer** on Android to manually clear it out if it has been impacted by the disk leak that existed **prior to version 2.3.21**.
-- - If you have set up Termux for use prior to this, the location of this folder, using **FX File Explorer**, is as follows: `Home > [Your NatsukiBot Installation Directory] > .\webm_downloads`.
+- Because Termux uses a different file system, the `webm_downloads` folder will be named `.\webm_downloads`. This will be hidden by default.
+  - Use **FX File Explorer** on Android to manually clear it if necessary.
+  - Location in **FX File Explorer**: `Home > [Your NatsukiBot Installation Directory] > .\webm_downloads`.
+- Termux is a **lower priority** than Windows, with other OS support even lower. However, since I also use Termux, **compatibility is a top priority**. Expect nearly the same functionality as on PC.
 
-- Termux will always be a lower priority than Windows, with other operating systems even further behind. However, since I also use Termux, compatibility is a top priority. Because of this, you can expect nearly the same level of compatibility on Termux as you do on PC.
+## Dev Notes
 
-## Dev notes
+This isn't part of the "documentation," just wanted to say **thank you** for using the bot!
 
-This isn't part of the "documentation". Just want to thank you for using the bot! I've worked on it for a few years already and although it made me age like 20 years through the suffering of trying to get the music stuff working, it's fun. Have fun with the bot \^-\^
+I've worked on this for years, and while the music system aged me like 20 years through sheer suffering, it's still fun tho!
+
+Enjoy the bot! \^-\^  
