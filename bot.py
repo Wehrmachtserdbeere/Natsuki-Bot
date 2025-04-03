@@ -1006,11 +1006,28 @@ async def on_message(message: discord.Message):
     has_embed = False
 
     if links:
-        twitter_alt = "https://niggerx.com" # Couldn't find a different alternative
         tiktok_alt = "https://vxtiktok.com"
         instagram_alt = "https://www.kkinstagram.com"
         pixiv_alt = "https://phixiv.net"
         youtube_alt = "https://youtube.com/watch?v="
+
+        
+        try:
+            with open("twitter_embedder_settings.json") as twtfile:
+                data = json.load(twtfile)
+            
+            id = message.guild.id
+
+            if id in data.get("vxtwitter", []):
+                twitter_alt = "https://vxtwitter.com"
+            elif id in data.get("fxtwitter", []):
+                twitter_alt = "https://fxtwitter.com"
+            elif id in data.get("niggerx", []):
+                twitter_alt = "https://niggerx.com"
+            else: # default
+                twitter_alt = "https://niggerx.com"
+        except:
+            twitter_alt = "https://niggerx.com"
 
         ###
         ### Quick info
@@ -1023,16 +1040,24 @@ async def on_message(message: discord.Message):
         ### As of March 31st, 2025, VXTiktok is not
         ### compromised.
         ###
+        ### - - - UPDATE 03/04/2025 - - -
+        ###
+        ### VXTwitter seemingly removed the political data.
+        ###
 
         replacements = {
             "https://x.com": twitter_alt,
             "https://www.x.com": twitter_alt,
             "https://twitter.com": twitter_alt,
             "https://www.twitter.com": twitter_alt,
-            "https://fxtwitter.com": twitter_alt,
-            "https://www.fxtwitter.com": twitter_alt,  # Creator of fxTwitter has/had report bots
-            "https://vxtwitter.com": twitter_alt,
-            "https://www.vxtwitter.com": twitter_alt,  # Creator of vxTwitter adds garbage political data to posts
+            #"https://fxtwitter.com": twitter_alt,
+            #"https://www.fxtwitter.com": twitter_alt,  # ALLEGEDLY the creator of fxTwitter has/had report bots
+            #"https://vxtwitter.com": twitter_alt,
+            #"https://www.vxtwitter.com": twitter_alt,  # Creator of vxTwitter added garbage political data to posts - as of 03/April/2025, the political stuff is gone.
+            #"https://niggerx.com": twitter_alt,
+            #"https://www.niggerx.com": twitter_alt, # NiggerX is missing a lot of posts.
+            "https://girlcockx.com": twitter_alt,
+            "https://www.girlcockx.com": twitter_alt, # No. Just, no.
             "https://tiktok.com": tiktok_alt,
             "https://www.tiktok.com": tiktok_alt,
             "https://instagram.com": instagram_alt,
@@ -2279,6 +2304,16 @@ async def on_ready():      # Check if it runs
         print(f"Choose image <<{image_id}>>")
         print(image_data["logo"])
         print(f"{image_ascii}")
+    
+    if not os.path.isfile("twitter_embedder_settings.json"):
+        with open("twitter_embedder_settings.json", "w") as twitter_embedder_file:
+            twitter_embedder_file.write(
+                "{\n"
+                "   \"vxtwitter\": [],\n"
+                "   \"fxtwitter\": [],\n"
+                "   \"niggerx\": []\n"
+                "}"
+            )
 
 
 print("Please wait a few seconds for the bot to connect")

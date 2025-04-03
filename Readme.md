@@ -63,6 +63,23 @@ To get your Bot Token:
 
 That's all for this file. It may be replaced with an optional globally shared blacklist one day.
 
+#### `twitter_embedder_settings.json`
+
+This file will be automatically created after running the bot once. Add the Server IDs as integers to the corresponding fields. Example:
+
+```json
+{
+  "vxtwitter": [
+    123456789,
+    234567890
+  ],
+  "fxtwitter": [],
+  "etc...": []
+}
+```
+
+Falls back on a default value if a given Server is not in the list.
+
 ## Edit the Bot
 
 You **must** edit the bot, otherwise, several commands will be bugged and non-functional. To find what you need to edit:
