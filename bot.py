@@ -2188,11 +2188,6 @@ async def blacklist_remove(interaction: discord.Interaction, user_id: discord.Me
             await interaction.followup.send("User is in the whitelist and cannot be removed from the blacklist.")
             return
 
-        # Check if the command issuer is the owner
-        if check_user_is_owner(interaction.user.id):
-            await interaction.followup.send("Sorry, but you are not the owner and cannot remove people from the blacklist.")
-            return
-
         # Remove from blacklist if present
         updated_blacklist = [entry for entry in blacklist if entry['uid'] != user_id_str]
 
