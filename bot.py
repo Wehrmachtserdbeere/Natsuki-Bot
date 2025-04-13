@@ -1081,7 +1081,7 @@ async def on_message(message: discord.Message):
 
         # Remove embeds from the original message
         if has_embed:
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.25) # SLOWDOWN to let embeds load. Default is 1, but testing with lower values.
             message = await message.channel.fetch_message(message.id)
             await message.edit(suppress=True)
 
@@ -1104,7 +1104,7 @@ class WebmConverter(commands.Cog):
     def __int__(self, bot):
         self.bot = bot
         self._last_member = None
-    DOWNLOAD_DIR = ".\\webm_downloads"
+    DOWNLOAD_DIR = "webm_downloads"
     try:
         channelID # type: ignore
     except:
@@ -1271,9 +1271,11 @@ class WebmConverter(commands.Cog):
                 if os.path.exists(video_file_path):
                     await channel_obj.send(file=discord.File(video_file_path))
                     os.remove(video_file_path)
+                    print(f"Successfully deleted {video_file_path}")
                     webm_path = Path(video_file_path).with_suffix('.webm')
                     if os.path.exists(webm_path):
                         os.remove(webm_path)
+                        print(f"Successfully deleted {webm_path}")
                 else:
                     print(f"Failed to locate converted file {video_file_path}")
 
