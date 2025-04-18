@@ -27,7 +27,7 @@
 
     This should install the required modules for the bot.
 
-5. Set up the environment (Guaranteed to work in Python 3.12.3).
+5. Set up the environment (Guaranteed to work in Python 3.13.3).
 6. Edit the bot (More information below).
 7. Run the bot.
 
@@ -162,6 +162,6 @@ This is a rudimentary solution after major bots removed YouTube playback for an 
 
 This isn't part of the "documentation," just wanted to say **thank you** for using the bot!
 
-I've worked on this for years, and while the music system aged me like 20 years through sheer suffering, it's still fun tho!
+I've worked on this for years (since **2018**!), and while the music system aged me like 20 years through sheer suffering, it's still fun!
 
 Enjoy the bot! \^-\^  
