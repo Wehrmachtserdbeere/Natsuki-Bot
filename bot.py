@@ -6,7 +6,7 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT"
-__version__ = "2.3.26"
+__version__ = "2.3.27"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/9EAGVZUt2Y" # EDIT THIS
@@ -1007,7 +1007,7 @@ async def on_message(message: discord.Message):
 
     if links:
         tiktok_alt = "https://vxtiktok.com"
-        instagram_alt = "https://www.kkinstagram.com"
+        instagram_alt = "https://www.instagramez.com"
         pixiv_alt = "https://phixiv.net"
         youtube_alt = "https://youtube.com/watch?v="
 
