@@ -995,14 +995,14 @@ async def on_message(message: discord.Message):
 
 
 
-    ### Twitter Renamer ###
+    ### Link Renamer ###
 
     # List of domains to exclude from processing
     excluded_domains = [
         
     ]
 
-    links = re.findall(r"https?://(?:www\.)?[\w.-]+/[\S]*", message.content)
+    links = re.findall(r"https?://(?:www\.)?[\w.-]+/[^\s`'\"<>\]]*", message.content)
     has_embed = False
 
     if links:
@@ -1050,12 +1050,6 @@ async def on_message(message: discord.Message):
             "https://www.x.com": twitter_alt,
             "https://twitter.com": twitter_alt,
             "https://www.twitter.com": twitter_alt,
-            #"https://fxtwitter.com": twitter_alt,
-            #"https://www.fxtwitter.com": twitter_alt,  # ALLEGEDLY the creator of fxTwitter has/had report bots
-            #"https://vxtwitter.com": twitter_alt,
-            #"https://www.vxtwitter.com": twitter_alt,  # Creator of vxTwitter added garbage political data to posts - as of 03/April/2025, the political stuff is gone.
-            #"https://niggerx.com": twitter_alt,
-            #"https://www.niggerx.com": twitter_alt, # NiggerX is missing a lot of posts.
             "https://girlcockx.com": twitter_alt,
             "https://www.girlcockx.com": twitter_alt, # No. Just, no.
             "https://tiktok.com": tiktok_alt,
@@ -1072,16 +1066,17 @@ async def on_message(message: discord.Message):
 
         final_list = []
         for link in links:
-            # Perform replacements
+            link = link.strip('`"\'<>[]')  # Remove unwanted trailing/wrapping characters
             for original, replacement in replacements.items():
                 if link.startswith(original):
-                    final_list.append(link.replace(original, replacement, 1))  # Replace only the first occurrence
+                    final_list.append(link.replace(original, replacement, 1))
                     has_embed = True
                     break
 
+
         # Remove embeds from the original message
         if has_embed:
-            await asyncio.sleep(0.25) # SLOWDOWN to let embeds load. Default is 1, but testing with lower values.
+            await asyncio.sleep(0.25) # SLOWDOWN to let embeds load. Default is 0.25, but testing with lower values. # EDIT THIS to be higher if embeds still show up.
             message = await message.channel.fetch_message(message.id)
             await message.edit(suppress=True)
 
