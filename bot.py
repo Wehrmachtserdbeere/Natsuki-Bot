@@ -1267,18 +1267,74 @@ class WebmConverter(commands.Cog):
             channel_obj = client.get_channel(channel_id)
 
             # Send the converted videos after all are processed
+            ### for _, video_file_path in video_touple_list:
+            ###     # Make sure the file exists before sending
+            ###     if os.path.exists(video_file_path):
+            ###         await channel_obj.send(file=discord.File(video_file_path))
+            ###         os.remove(video_file_path)
+            ###         print(f"Successfully deleted {video_file_path}")
+            ###         webm_path = Path(video_file_path).with_suffix('.webm')
+            ###         if os.path.exists(webm_path):
+            ###             os.remove(webm_path)
+            ###             print(f"Successfully deleted {webm_path}")
+            ###     else:
+            ###         print(f"Failed to locate converted file {video_file_path}")
+
+            # Initialize two lists:
+            # - to_delete: file paths we need to delete after sending
+            # - to_send: discord.File objects to send in the message
+            to_delete = []
+            to_send = []
+            
+            # Iterate through all videos provided in video_touple_list
             for _, video_file_path in video_touple_list:
-                # Make sure the file exists before sending
-                if os.path.exists(video_file_path):
-                    await channel_obj.send(file=discord.File(video_file_path))
-                    os.remove(video_file_path)
-                    print(f"Successfully deleted {video_file_path}")
-                    webm_path = Path(video_file_path).with_suffix('.webm')
-                    if os.path.exists(webm_path):
-                        os.remove(webm_path)
-                        print(f"Successfully deleted {webm_path}")
+                # If we have less than 10 videos queued for sending
+                if len(to_send) < 10:
+                    # Check if the file actually exists (avoid errors)
+                    if os.path.exists(video_file_path):
+                        # Add original video file path to the list of files to delete later
+                        to_delete.append(video_file_path)
+                        # Also add the corresponding .webm file (assuming a conversion process created it)
+                        to_delete.append(Path(video_file_path).with_suffix('.webm'))
+                        # Create a Discord file object and add it to the sending queue
+                        to_send.append(discord.File(video_file_path))
                 else:
-                    print(f"Failed to locate converted file {video_file_path}")
+                    # When 10 files are queued up, send them as a batch
+            
+                    print("Sending mp4s...")
+                    await channel_obj.send(files=to_send)  # Actually send the files to the Discord channel
+                    print("Sent!")
+            
+                    # After sending, clear the sending queue
+                    to_send.clear()
+            
+                    # Now delete all files related to this batch
+                    for i in to_delete:
+                        if os.path.exists(i):
+                            os.remove(i)
+                            print(f"Successfully deleted {i}")
+                    # After deletion, clear the deletion queue
+                    to_delete.clear()
+            
+            # After the loop is finished, there might still be some files left (less than 10)
+            # Handle any remaining files
+            if to_send:
+                print("Sending remaining mp4s...")
+                await channel_obj.send(files=to_send)  # Send the remaining files
+                print("Sent remaining!")
+            
+                # Clear the sending queue
+                to_send.clear()
+            
+                # Delete any leftover files
+                for i in to_delete:
+                    if os.path.exists(i):
+                        os.remove(i)
+                        print(f"Successfully deleted {i}")
+                # Clear the deletion queue
+                to_delete.clear()
+
+
 
         else:
             raise WebmConverter.WebmFailures.NotAToupleList(
