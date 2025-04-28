@@ -1007,9 +1007,11 @@ async def on_message(message: discord.Message):
 
     if links:
         tiktok_alt = "https://vxtiktok.com"
-        instagram_alt = "https://www.instagramez.com"
+        # instagram_alt = "https://www.instagramez.com" # Seems to be broken
+        reddit_alt = "https://www.redditez.com"
         pixiv_alt = "https://phixiv.net"
         youtube_alt = "https://youtube.com/watch?v="
+        bilibili_alt = "https://www.bilibiliez.com"
 
         
         try:
@@ -1051,17 +1053,21 @@ async def on_message(message: discord.Message):
             "https://twitter.com": twitter_alt,
             "https://www.twitter.com": twitter_alt,
             "https://girlcockx.com": twitter_alt,
-            "https://www.girlcockx.com": twitter_alt, # No. Just, no.
+            "https://www.girlcockx.com": twitter_alt, # Literally just a VXTwitter referrer
             "https://tiktok.com": tiktok_alt,
             "https://www.tiktok.com": tiktok_alt,
-            "https://instagram.com": instagram_alt,
-            "https://www.instagram.com": instagram_alt,
+            #"https://instagram.com": instagram_alt,
+            #"https://www.instagram.com": instagram_alt,
             "https://pixiv.net": pixiv_alt,
             "https://www.pixiv.net": pixiv_alt,
             "https://youtube.com/shorts/": youtube_alt,
             "https://www.youtube.com/shorts/": youtube_alt,
             "https://youtu.be/": youtube_alt,
             "https://www.youtu.be/": youtube_alt,
+            "https://reddit.com/": reddit_alt,
+            "https://www.reddit.com/": reddit_alt,
+            "https://bilibili.com/": bilibili_alt,
+            "https://www.bilibili.com/": bilibili_alt
         }
 
         final_list = []
