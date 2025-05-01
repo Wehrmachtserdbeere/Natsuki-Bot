@@ -2118,16 +2118,19 @@ trash_emoji = "🗑️"
 @client.event
 async def on_raw_reaction_add(payload : discord.RawReactionActionEvent):
     """ Handles reactions on messages even if the bot wasn't running when the message was sent. """
-    if payload.emoji.name == trash_emoji:
-        channel : discord.TextChannel
-        channel = client.get_channel(payload.channel_id)
-        message : discord.Message
-        message = await channel.fetch_message(payload.message_id)
+    if check_user_in_blacklist(payload.user_id):
+        pass # Ignore
+    else:
+        if payload.emoji.name == trash_emoji:
+            channel : discord.TextChannel
+            channel = client.get_channel(payload.channel_id)
+            message : discord.Message
+            message = await channel.fetch_message(payload.message_id)
 
-        if message.author.id == client.user.id and payload.user_id != client.user.id:
-            print("User is not bot!")
-            await message.delete()
-            print("Deleted message!")
+            if message.author.id == client.user.id and payload.user_id != client.user.id:
+                print("User is not bot!")
+                await message.delete()
+                print("Deleted message!")
 
 
 
