@@ -6,7 +6,7 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT"
-__version__ = "2.3.27"
+__version__ = "2.4.0"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/9EAGVZUt2Y" # EDIT THIS
@@ -59,6 +59,8 @@ import subprocess
 from datetime import timedelta
 import defusedxml.ElementTree as ET
 import settings
+import logging
+from logging.handlers import RotatingFileHandler
 
 # Settings
 is_phone = settings.is_phone
@@ -69,11 +71,28 @@ is_debugging = settings.is_debugging
 DISCORD_FILE_LIMIT = settings.file_size_limit
 waifugame_enabled = settings.enable_waifugame
 
-if is_debugging:
-    logging.basicConfig(level=logging.DEBUG)
-else:
-    # User will still want good warnings.
-    logging.basicConfig(level=logging.ERROR)
+
+# Ensure the logs folder exists
+if not os.path.exists("logs"):
+    os.makedirs("logs")
+
+# Define log files and their paths
+log_files = [
+    "logs/error.log",           # Current log file
+    "logs/error_1.log",         # Previous log
+    "logs/error_2.log",         # Older log
+    "logs/error_3.log"          # Oldest log
+]
+
+# Step 2: Rotate the log files (delete destination if it exists)
+for i in range(len(log_files) - 1, 0, -1):
+    src = log_files[i - 1]
+    dst = log_files[i]
+    if os.path.exists(src):
+        if os.path.exists(dst):
+            os.remove(dst)  # Remove the destination file before renaming
+        os.rename(src, dst)
+
 
 time_now = datetime.now().strftime("%H:%M:%S")
 print(f"Bot Started at {time_now}")
@@ -177,6 +196,23 @@ ytdl_format_options = {
 
 ytdl = yt_dlp.YoutubeDL(ytdl_format_options)
 
+# Add bot version to the error logger
+class VersionLoggerAdapter(logging.LoggerAdapter):
+    def process(self, msg, kwargs):
+        return f"[Bot Version {__version__}] || {msg}", kwargs
+
+logging.basicConfig(
+    level = logging.DEBUG if is_debugging else logging.ERROR,
+    format = "%(levelname)s || %(asctime)s || %(filename)s:%(lineno)d || %(message)s",
+    handlers = [
+        RotatingFileHandler(
+            log_files[0], maxBytes=5 * 1024 * 1024, backupCount=3  # 5 MB size limit for logs
+        )
+    ]
+)
+
+logger = VersionLoggerAdapter(logging.getLogger(__name__), {})
+
 
 class YTDLSource(discord.PCMVolumeTransformer):
     def __init__(self, source, *, data, volume=0.5):
@@ -220,14 +256,22 @@ def search(query):
 print("Initializing...")
 
 # Load blacklist data from a JSON file
-def load_longterm_lists(filename="./longterm_lists.json"):
+def load_longterm_lists(filename="./longterm_lists.json") -> json:
     '''Load data from a file.'''
     with open(filename, 'r') as file:
         return json.load(file)
 
 # Check if user is in blacklist and return details
-def check_user_in_blacklist(user_id, blacklist_data) -> str | bool:
-    '''Returns user ID if found. Else returns a bool "False".'''
+def check_user_in_blacklist(user_id : int, blacklist_data : json) -> tuple[int, str] | bool:
+    """Returns user ID and Blacklist Reason if found. Else returns a bool "False".
+
+    Args:
+        user_id (int): The User's ID, as integer.
+        blacklist_data (json): The entire JSON, generally called with `load_longterm_lists()`.
+
+    Returns:
+        When `user_id` is found, returns `tuple[User ID (int), Reason (str)]`. Else, returns `False`.
+    """
     for entry in blacklist_data['blacklist']:
         if entry['uid'] == user_id:
             return entry['uid'], entry['reason']
@@ -325,12 +369,11 @@ async def you_are_cute(interaction: discord.Interaction) -> None:
     """ Tell me I'm cute """
 
     blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
+    result = check_user_in_blacklist(interaction.user.id, blacklist_data)
     
     if result:
         uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
     else:        
         await interaction.response.send_message("I'm NOT cute!!!")
 
@@ -349,12 +392,11 @@ if not is_phone:
         """ Send an image of Natsuki """
 
         blacklist_data = load_longterm_lists()
-        user_id = str(interaction.user.id)  # Convert user ID to string
-        result = check_user_in_blacklist(user_id, blacklist_data)
+        result = check_user_in_blacklist(interaction.user.id, blacklist_data)
 
         if result:
             uid, reason = result
-            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+            await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else: 
             imgimg = "D:\\Alles\\Alle Bilder\\DDLC\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\DDLC")) # <-- EDIT this to any path with images you like.
             await interaction.response.send_message(file=discord.File(imgimg))
@@ -365,12 +407,11 @@ if not is_phone:
         """ Send an SHDF image """
 
         blacklist_data = load_longterm_lists()
-        user_id = str(interaction.user.id)  # Convert user ID to string
-        result = check_user_in_blacklist(user_id, blacklist_data)
+        result = check_user_in_blacklist(interaction.user.id, blacklist_data)
 
         if result:
             uid, reason = result
-            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+            await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else: 
             shdfimg = "D:\\Alles\\Alle Bilder\\Anime People doing Wholesome Thing\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Anime People doing Wholesome Thing")) # <-- EDIT this to any path with images you like.
             await interaction.response.send_message(file=discord.File(shdfimg))
@@ -379,12 +420,11 @@ if not is_phone:
     async def fate(interaction: discord.Interaction):
         """ Get an image of the anime \"Fate\" """
         blacklist_data = load_longterm_lists()
-        user_id = str(interaction.user.id)  # Convert user ID to string
-        result = check_user_in_blacklist(user_id, blacklist_data)
+        result = check_user_in_blacklist(interaction.user.id, blacklist_data)
         
         if result:
             uid, reason = result
-            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+            await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else:
             fateimg = "D:Alles\\Alle Bilder\\Fate\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Fate")) # <-- EDIT this if you have a folder for Fate images.
             await interaction.response.send_message(file=discord.File(fateimg))
@@ -394,12 +434,11 @@ if not is_phone:
     async def tanya(interaction: discord.Interaction):
         """ Get an image of Tanya von Degurechaff """
         blacklist_data = load_longterm_lists()
-        user_id = str(interaction.user.id)  # Convert user ID to string
-        result = check_user_in_blacklist(user_id, blacklist_data)
+        result = check_user_in_blacklist(interaction.user.id, blacklist_data)
         
         if result:
             uid, reason = result
-            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+            await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else:
             tanyaimg = "D:\\Alles\\Alle Bilder\\Tanya Degurechaff\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Tanya Degurechaff")) # <-- EDIT this if you have a folder for images of anything called "tanya".
             await interaction.response.send_message(file=discord.File(tanyaimg))
@@ -409,12 +448,11 @@ if not is_phone:
     async def tomboy(interaction: discord.Interaction):
         """Mmm tomboy abs yummy licky """
         blacklist_data = load_longterm_lists()
-        user_id = str(interaction.user.id)  # Convert user ID to string
-        result = check_user_in_blacklist(user_id, blacklist_data)
+        result = check_user_in_blacklist(interaction.user.id, blacklist_data)
 
         if result:
             uid, reason = result
-            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+            await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else:
             tomboyimg = "D:\\Alles\\Alle Bilder\\Anime Tomboys\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Anime Tomboys")) # <-- EDIT this to your Anime Tomboys folder. I know you have one.
             await interaction.response.send_message(file=discord.File(tomboyimg))
@@ -424,12 +462,11 @@ if not is_phone:
     async def rem(interaction: discord.Interaction):
         """ Get an image of Rem """
         blacklist_data = load_longterm_lists()
-        user_id = str(interaction.user.id)  # Convert user ID to string
-        result = check_user_in_blacklist(user_id, blacklist_data)
+        result = check_user_in_blacklist(interaction.user.id, blacklist_data)
 
         if result:
             uid, reason = result
-            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+            await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else:
             remimg = "D:\\Alles\\Alle Bilder\\Rem\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Rem\\")) # <-- EDIT this to images of Rem.
             await interaction.response.send_message(file=discord.File(remimg))
@@ -439,12 +476,11 @@ if not is_phone:
     async def klk(interaction: discord.Interaction):
         """ Get an image of Kill la Kill """
         blacklist_data = load_longterm_lists()
-        user_id = str(interaction.user.id)  # Convert user ID to string
-        result = check_user_in_blacklist(user_id, blacklist_data)
+        result = check_user_in_blacklist(interaction.user.id, blacklist_data)
 
         if result:
             uid, reason = result
-            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+            await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else:
             klkimg = "D:\\Alles\\Alle Bilder\\Kill la Kill\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Kill la Kill\\")) # <-- EDIT this to Kill La Kill images.
             await interaction.response.send_message(file=discord.File(klkimg))
@@ -454,12 +490,11 @@ if not is_phone:
     async def rmeme(interaction: discord.Interaction):
         """ Get one of Strawb's memes """
         blacklist_data = load_longterm_lists()
-        user_id = str(interaction.user.id)  # Convert user ID to string
-        result = check_user_in_blacklist(user_id, blacklist_data)
+        result = check_user_in_blacklist(interaction.user.id, blacklist_data)
 
         if result:
             uid, reason = result
-            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+            await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else:
             await interaction.response.defer()
             try:
@@ -475,12 +510,11 @@ if not is_phone:
     async def rr(interaction: discord.Interaction):
         """ Get a NS song (Most likely German) """
         blacklist_data = load_longterm_lists()
-        user_id = str(interaction.user.id)  # Convert user ID to string
-        result = check_user_in_blacklist(user_id, blacklist_data)
+        result = check_user_in_blacklist(interaction.user.id, blacklist_data)
 
         if result:
             uid, reason = result
-            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+            await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else:
             await interaction.response.defer()
             try:
@@ -505,7 +539,8 @@ if not is_phone:
                     await interaction.followup.send("File too large, try again.")
                 except PermissionError:
                     await interaction.followup.send("Permission denied; Folder was probably auto-blocked.")
-            except OSError:
+            except OSError as e:
+                logger.error(f"[v{__version__}] || OSError: {e}")
                 await interaction.followup.send("An error occoured, please try again.")
 
 
@@ -513,12 +548,11 @@ if not is_phone:
     async def christ_chan(interaction: discord.Interaction):
         """ Get an image of Christ-Chan """
         blacklist_data = load_longterm_lists()
-        user_id = str(interaction.user.id)  # Convert user ID to string
-        result = check_user_in_blacklist(user_id, blacklist_data)
+        result = check_user_in_blacklist(interaction.user.id, blacklist_data)
 
         if result:
             uid, reason = result
-            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+            await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else:
             chrImg = "D:\\Alles\\Alle Bilder\\Christ-chan\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Christ-chan\\")) # <-- EDIT this to a path with images of Christ Chan. Not to be confused with Chris Chan.
             await interaction.response.send_message(file=discord.File(chrImg))
@@ -528,12 +562,11 @@ if not is_phone:
     async def chan(interaction: discord.Interaction):
         """ Get an image of another Chan """
         blacklist_data = load_longterm_lists()
-        user_id = str(interaction.user.id)  # Convert user ID to string
-        result = check_user_in_blacklist(user_id, blacklist_data)
+        result = check_user_in_blacklist(interaction.user.id, blacklist_data)
 
         if result:
             uid, reason = result
-            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+            await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else:
             chanImg = "D:\\Alles\\Alle Bilder\\Other Chans\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Other Chans\\")) # <-- EDIT this to a path with images of other -chan characters.
             await interaction.response.send_message(file=discord.File(chanImg))
@@ -543,12 +576,11 @@ if not is_phone:
     async def megu(interaction: discord.Interaction):
         """ Get an image of Megumin """
         blacklist_data = load_longterm_lists()
-        user_id = str(interaction.user.id)  # Convert user ID to string
-        result = check_user_in_blacklist(user_id, blacklist_data)
+        result = check_user_in_blacklist(interaction.user.id, blacklist_data)
 
         if result:
             uid, reason = result
-            await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+            await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else:
             chanImg = "D:\\Alles\\Alle Bilder\\Megumin\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Megumin\\")) # <-- EDIT this to a path with Megumin images.
             await interaction.response.send_message(file=discord.File(chanImg))
@@ -568,12 +600,11 @@ async def draw(
     drawmessage: str):
     """ Draw something with B, W, R, and . """
     blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
+    result = check_user_in_blacklist(interaction.user.id, blacklist_data)
     
     if result:
         uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
     else: 
         drawfinalmessage = []
 
@@ -601,12 +632,11 @@ async def oracle(
     amount_of_letters: int):
     """ Terry A. Davis' Oracle """
     blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
+    result = check_user_in_blacklist(interaction.user.id, blacklist_data)
     
     if result:
         uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
     else: 
         await interaction.response.send_message(functools.reduce(lambda line, word: line + f"{word} ", (random.choice(oraclewords) for _ in range(amount_of_letters)), str()))
 
@@ -618,12 +648,11 @@ async def oracle_ger(
     amount_de: int):
     """ Terry A. Davis' Oracle but in German """
     blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
+    result = check_user_in_blacklist(interaction.user.id, blacklist_data)
     
     if result:
         uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
     else:
         await interaction.response.send_message(functools.reduce(lambda line, word: line + f"{word} ", (random.choice(oracle_de_words) for _ in range(amount_de)), str()))
 
@@ -636,11 +665,10 @@ async def safe(
     tags: str):
     """ Get an image from Safebooru """
     blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
+    result = check_user_in_blacklist(interaction.user.id, blacklist_data)
     if result:
         uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
     else:
         try:
             ctxtags1 = tags.replace(", ", "+")
@@ -677,11 +705,10 @@ async def gel(
     gendered: Literal['Female Only', 'Male Only', 'Any'] = 'Any'):
     """ Get an image from Gelbooru (SFW only) """
     blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
+    result = check_user_in_blacklist(interaction.user.id, blacklist_data)
     if result:
         uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         return
     elif not interaction.channel.nsfw and nsfw.lower() in ['questionable', 'explicit only', 'all']:
         await interaction.response.send_message(f"Could not run command! This command is for channels marked NSFW only!")
@@ -759,8 +786,7 @@ async def rule34xxx(
     `tags` defines tags. Follow this format: `tag_1, tag_2, -banned_tag, *wild_card`
     """
     blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id) # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
+    result = check_user_in_blacklist(interaction.user.id, blacklist_data)
 
     female_only = "+-1boy+-2boys+-3boys+-4boys+-5boys+-6%2bboys+-penis+-multiple_penises+-muscular_male+-male_focus+-multiple_boys+-yaoi"
     male_only = "+-1girl+-2girls+-3girls+-4girls+-5girls+-6%2bgirls+-vagina"
@@ -774,7 +800,7 @@ async def rule34xxx(
 
     if result:
         uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         return
     elif not interaction.channel.nsfw:
         await interaction.response.send_message(f"Could not run command! This command is for channels marked NSFW only!")
@@ -856,11 +882,10 @@ async def rule34xxx(
 async def bleach(interaction: discord.Interaction, tags: str, nsfw: Literal['safe', 'questionable and safe (high filter)', 'questionable and safe (low filter)', 'all', 'explicit only'] = 'safe'): # <-- This site sucks btw, horrid API, barely any documentation, not even filtered correctly. Be careful, even "safe" will often return porn.
     """ Get an image from Bleachbooru (Severe NSFW warning) """
     blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
+    result = check_user_in_blacklist(interaction.user.id, blacklist_data)
     if result:
         uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         return
     elif not interaction.channel.nsfw:
         await interaction.response.send_message(f"Could not run command! This command is for channels marked NSFW only!")
@@ -915,12 +940,11 @@ async def bleach(interaction: discord.Interaction, tags: str, nsfw: Literal['saf
 async def roll(interaction: discord.Interaction, sides: int, rolls: int = 1, highlight_number: int = None):
     """ Roll a die """
     blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
+    result = check_user_in_blacklist(interaction.user.id, blacklist_data)
     
     if result:
         uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
     else:
         result = []
         response = ""
@@ -946,6 +970,7 @@ async def roll(interaction: discord.Interaction, sides: int, rolls: int = 1, hig
                         response = response + f"\nHighlighted Roll: {result[highlight_number - 1]}"
                 await interaction.response.send_message(response)
             except Exception as e:
+                logger.error(f"[v{__version__}] || Error rolling dice: {e}")
                 await interaction.response.send_message(f"Error rolling die: {e}", ephemeral = True)
 
 
@@ -1496,6 +1521,7 @@ async def _play(interaction: discord.Interaction, url: str):
                     await NatsukiActivity.set_streaming_activity(activity_text_data)
                     vc.play(playnow, after = lambda x: asyncio.run(NatsukiActivity.set_voice_activity(activity_text_data)))
                 except discord.errors.ClientException:
+                    # No error logging needed, this is graceful and needs no fixing, likely ever... things said before a fatal error xD
                     asyncio.run(NatsukiActivity.set_voice_activity(activity_text_data))
                     await interaction.edit_original_response(content="Not connected to voice.")
                 
@@ -1532,13 +1558,17 @@ async def _play(interaction: discord.Interaction, url: str):
     #    await interaction.edit_original_response(content = "File too large, try again.")
     except PermissionError:
         await interaction.edit_original_response(content = "Permission err- wait what? Yea... \"Permission Error\". Huh.")
-    except yt_dlp.DownloadError:
+    except yt_dlp.DownloadError as e:
+        logger.error(f"[v{__version__}] || YT-DLP Download Error: {e}")
         await interaction.edit_original_response(content = "Video unavailable. Most likely because this content is age-restricted or not available in the host country.\nComplain to YouTube about this, I cannot fix this.")
     except AloneInVoiceChatException:
+        # No error logging needed.
         await interaction.edit_original_response(content = "I'm alone in the voice channel. I'm not playing for myself.")
-    except NotInVoiceChatException:
+    except NotInVoiceChatException as e:
+        # No error logging needed.
         await interaction.edit_original_response(content = "I'm not in a voice channel. *Where* do you expect me to play anything?")
-    except OSError:
+    except OSError as e:
+        logger.error(f"[v{__version__}] || OSError: {e}")
         await interaction.edit_original_response(content = "An error occoured, please try again.")
 
 def add_to_playlist(playlist: list, url: str):
@@ -1709,6 +1739,7 @@ async def play_next(interaction : discord.Interaction):
                 if not is_playing:
                     await NatsukiActivity.set_streaming_activity(activity_text_data)
             except discord.errors.ClientException:
+                # No error log needed.
                 await interaction.edit_original_response(content="Not connected to voice.")
                 return
 
@@ -1721,15 +1752,18 @@ async def play_next(interaction : discord.Interaction):
 
     except discord.errors.HTTPException:
         await interaction.channel.send(content = "File too large, try again.")
-    except PermissionError:
+    except PermissionError as e:
+        logger.error(f"[v{__version__}] || Permission Error: {e}")
         await interaction.channel.send(content = "Permission error... Weird.")
-    except yt_dlp.DownloadError:
+    except yt_dlp.DownloadError as e:
+        logger.error(f"[v{__version__}] || YT-DLP Download Error: {e}")
         await interaction.channel.send(content = "Video unavailable. Most likely because this content is age-restricted or not available in the host country.\nComplain to YouTube about this, I cannot fix this.")
     except AloneInVoiceChatException:
         await interaction.channel.send(content = "I'm alone in the voice channel. I'm not playing for myself.")
     except NotInVoiceChatException:
         await interaction.channel.send(content = "I'm not in a voice channel. *Where* do you expect me to play anything?")
-    except OSError:
+    except OSError as e:
+        logger.error(f"[v{__version__}] || OSError: {e}")
         await interaction.channel.send(content = "An error occoured, please try again.")
 
 
@@ -1757,6 +1791,7 @@ async def skip(interaction : discord.Interaction):
             vc.stop()
             await NatsukiActivity.set_voice_activity(activity_text_data)
     except Exception as e:
+        logger.error(f"[v{__version__}] || Unknown Exception: {e}")
         await interaction.followup.send(content = "Error! Something happened!\n" + str(e))
 
 
@@ -1792,12 +1827,11 @@ async def embedtest(interaction : discord.Interaction):
 async def rr_play(interaction : discord.Interaction):
     ''' Play a song from my private collection ''' # <-- EDIT with your flavor text
     blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
+    result = check_user_in_blacklist(interaction.user.id, blacklist_data)
     
     if result:
         uid, reason = result
-        await interaction.response.send_message(f"Could not run command! User <@{user_id}> is blacklisted.\nReason: {reason}.")
+        await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
     else:
         await interaction.response.defer()
         try:
@@ -1843,7 +1877,8 @@ async def rr_play(interaction : discord.Interaction):
                 await interaction.edit_original_response(content = "File too large, try again.")
             except PermissionError:
                 await interaction.edit_original_response(content = "Permission denied; Folder was probably auto-blocked, please try again.")
-        except OSError:
+        except OSError as e:
+            logger.error(f"[v{__version__}] || OSError: {e}")
             await interaction.edit_original_response(content = "An error occoured, please try again.")
 
 
@@ -2116,21 +2151,50 @@ if waifugame_enabled:
 trash_emoji = "🗑️"
 
 @client.event
-async def on_raw_reaction_add(payload : discord.RawReactionActionEvent):
-    """ Handles reactions on messages even if the bot wasn't running when the message was sent. """
-    if check_user_in_blacklist(payload.user_id):
-        pass # Ignore
-    else:
-        if payload.emoji.name == trash_emoji:
-            channel : discord.TextChannel
-            channel = client.get_channel(payload.channel_id)
-            message : discord.Message
-            message = await channel.fetch_message(payload.message_id)
+async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
+    """Handles reactions on messages even if the current iteration of the bot wasn't running when the message was sent."""
 
-            if message.author.id == client.user.id and payload.user_id != client.user.id:
-                print("User is not bot!")
+    # Get channel
+    channel: discord.TextChannel = client.get_channel(payload.channel_id)
+    if not channel:
+        channel = await client.fetch_channel(payload.channel_id)
+
+    # Get message
+    message: discord.Message = await channel.fetch_message(payload.message_id)
+
+    print(f"User {payload.user_id} is in blacklist - {str(check_user_in_blacklist(payload.user_id, load_longterm_lists()))}")
+
+    # If it's the correct emoji
+    if payload.emoji.name == trash_emoji:
+        # Remove reaction if user is in blacklist
+        if check_user_in_blacklist(payload.user_id, load_longterm_lists()):
+            print("In blacklist") # <-------------------------------------- THIS CURRENTLY DOES NOT RUN! Idk why. Using "check_user_in_blacklist" normally works.
+            # Get the user object for the reaction
+            guild = message.guild
+            member = guild.get_member(payload.user_id) or await guild.fetch_member(payload.user_id)
+            # Finally, remove the reaction
+            try:
+                await message.remove_reaction(payload.emoji, member)
+                print("Removed.")
+            except Exception as e:
+                logger.error(f"[v{__version__}] || Unknown exception: {e}")
+                pass
+            return  # Exit early
+        # If the message author is the bot, AND the payload was NOT sent by the bot...
+        if message.author.id == client.user.id and payload.user_id != client.user.id and not check_user_in_blacklist(payload.user_id, load_longterm_lists()):
+            member_count = 0
+            for member in message.guild.members:
+                if not member.bot:
+                    member_count += 1
+            # If 4 or more people are in the server...
+            if member_count >= 4:
+                # And the message already has 2 reactions...
+                for reaction in message.reactions:
+                    if reaction.emoji == trash_emoji and reaction.count >= 2:
+                        await message.delete()
+            else:
                 await message.delete()
-                print("Deleted message!")
+
 
 
 
@@ -2163,8 +2227,7 @@ bot_info = (
 @client.tree.command(name="bug_report")
 async def bug_report(interaction : discord.Interaction, short_desc : str, steps_to_repeat : str, urgent : Literal['Yes', 'No'] = 'No'):
     blacklist_data = load_longterm_lists()
-    user_id = str(interaction.user.id)  # Convert user ID to string
-    result = check_user_in_blacklist(user_id, blacklist_data)
+    result = check_user_in_blacklist(interaction.user.id, blacklist_data)
     
     if result:
         uid, reason = result
@@ -2191,7 +2254,6 @@ async def bug_report(interaction : discord.Interaction, short_desc : str, steps_
 async def blacklist_add(interaction: discord.Interaction, user_id: discord.Member, reason: str):
     ''' Bot Owner only command - Adds someone to blacklist using their UserID '''
     await interaction.response.defer()
-    user_id_str = str(user_id.id)
     owner_id = 883054741263888384  # Replace with your user ID
     
     # Load the blacklist and whitelist data
@@ -2205,19 +2267,21 @@ async def blacklist_add(interaction: discord.Interaction, user_id: discord.Membe
 
     if str(interaction.user.id) in admins:
         # Check if whitelist exists and if the user is in it
-        if user_id_str in whitelist:
+        if user_id.id in whitelist:
             await interaction.followup.send("User is in the whitelist and cannot be added to the blacklist.")
             return
 
         if user_id.id == owner_id:
             await interaction.followup.send("You cannot add the Owner to the blacklist. Nice try.")
+            return
 
         if user_id.id == client.user.id:
             await interaction.followup.send("You cannot add the Bot to the blacklist. Nice try.")
+            return
 
         # Add to blacklist if not already present
-        if user_id_str not in blacklist:
-            blacklist.append({"uid": user_id_str, "reason": reason})
+        if user_id.id not in blacklist:
+            blacklist.append({"uid": user_id.id, "reason": reason})
             data["blacklist"] = blacklist
             save_data(data)
             await interaction.followup.send("Added to blacklist!")
@@ -2258,7 +2322,6 @@ async def blacklist_add(interaction: discord.Interaction, user_id: discord.Membe
 async def blacklist_remove(interaction: discord.Interaction, user_id: discord.Member):
     ''' Bot Owner only command - Removes someone from blacklist using their UserID '''
     await interaction.response.defer()
-    user_id_str = str(user_id.id)
 
     # Load the blacklist and whitelist data
     data: dict
@@ -2271,22 +2334,33 @@ async def blacklist_remove(interaction: discord.Interaction, user_id: discord.Me
 
     if str(interaction.user.id) in admins:
         # Check if the user is in the whitelist
-        if user_id_str in whitelist:
+        if user_id.id in whitelist:
             await interaction.followup.send("User is in the whitelist and cannot be removed from the blacklist.")
             return
 
         # Remove from blacklist if present
-        updated_blacklist = [entry for entry in blacklist if entry['uid'] != user_id_str]
+        updated_blacklist = [entry for entry in blacklist if entry['uid'] != user_id.id]
 
         if len(updated_blacklist) < len(blacklist):
             data["blacklist"] = updated_blacklist
             save_data(data)
-            await interaction.followup.send(f"Removed user {user_id_str} from the blacklist.")
+            await interaction.followup.send(f"Removed user {user_id.id} from the blacklist.")
         else:
             await interaction.followup.send("User not found in the blacklist.")
     else:
         await interaction.followup.send("You're not recognized as a Natsukian. You can't add people to the blacklist.")
         
+
+@client.tree.command(name="test_error")
+async def test_error(interaction: discord.Interaction):
+    ''' Sends a test error to test the error logger. '''
+    if check_user_is_true_natsukian(interaction.user.id, load_longterm_lists()):
+        logger.error(f"[{__version__}] || Test Error! Part 1.")
+        try:
+            raise Exception("Test Error -_-")
+        except Exception as e:
+            logger.error(f"[{__version__}] || Test Error! Part 2. --- {e}")
+
 
 async def print_latency(client):
     while True:
