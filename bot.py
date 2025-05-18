@@ -6,7 +6,7 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT"
-__version__ = "2.4.0"
+__version__ = "2.5.0"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/9EAGVZUt2Y" # EDIT THIS
@@ -39,7 +39,6 @@ from oracle import oracle as oraclewords
 from oracle_german import oracle_de as oracle_de_words
 import functools
 from discord.ext import commands
-from botToken import botToken
 import eyed3
 import datetime
 from bs4 import BeautifulSoup
@@ -61,6 +60,10 @@ import defusedxml.ElementTree as ET
 import settings
 import logging
 from logging.handlers import RotatingFileHandler
+from dotenv import load_dotenv
+import sync_gist
+
+load_dotenv()
 
 # Settings
 is_phone = settings.is_phone
@@ -1840,7 +1843,7 @@ async def rr_play(interaction : discord.Interaction):
                 await channel.connect(self_mute = False, self_deaf = True)
             vc = interaction.guild.voice_client
             if interaction.user.voice is None:
-                interaction.edit_original_response(content = 'Hey, doofus, you\'re not in a voice channel! Join one first and *ten* ask me to play something!')
+                await interaction.edit_original_response(content = 'Hey, doofus, you\'re not in a voice channel! Join one first and *ten* ask me to play something!')
             mp3 = random.choice(mp3_path)
             try:
                 print("Arrived here 1")
@@ -2162,7 +2165,8 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
     # Get message
     message: discord.Message = await channel.fetch_message(payload.message_id)
 
-    print(f"User {payload.user_id} is in blacklist - {str(check_user_in_blacklist(payload.user_id, load_longterm_lists()))}")
+    if not payload.user_id == client.user.id:
+        print(f"User {payload.user_id} is in blacklist - {str(check_user_in_blacklist(payload.user_id, load_longterm_lists()))}")
 
     # If it's the correct emoji
     if payload.emoji.name == trash_emoji:
@@ -2251,10 +2255,49 @@ async def bug_report(interaction : discord.Interaction, short_desc : str, steps_
 
 
 @client.tree.command(name="blacklist_add")
-async def blacklist_add(interaction: discord.Interaction, user_id: discord.Member, reason: str):
+@app_commands.describe(user_id_str = "The UserID of the User you wish to add.")
+@app_commands.describe(user_mention = "The Mention of the User you wish to add.")
+@app_commands.describe(validate = "Whether you wish to checking if the user exists first or go straight to removing them.")
+async def blacklist_add(interaction: discord.Interaction, reason: str, user_id_str: str = None, user_mention: discord.Member = None, validate: bool = False):
+    """Add User ID to blacklist based on provided ID or mention.
+
+    Args:
+        interaction (discord.Interaction): The interaction itself.
+        reason (str): The provided reason as to why the User is being added.
+        user_id (int, optional): The User ID. Defaults to -1.
+        user_mention (discord.Member, optional): The `discord.Member` akin to a Discord mention. Defaults to None.
+        validate (bool, optional): Whether to forcibly validate that the User exists. Defaults to False.
+    """
     ''' Bot Owner only command - Adds someone to blacklist using their UserID '''
     await interaction.response.defer()
     owner_id = 883054741263888384  # Replace with your user ID
+
+    if user_id_str:
+        try:
+            user_id = int(user_id_str)
+        except:
+            await interaction.edit_original_response(content = "Invalid User ID set in `user_id_str`. Please retry.")
+            return
+
+    # Required validation
+    if user_id == None and user_mention == None:
+        await interaction.edit_original_response(content = "UserID and Ping not provided. Please retry.")
+        raise UserNotFound
+        return
+    elif validate:
+        if user_mention != None:
+            try:
+                user_id = user_mention.id
+            except:
+                await interaction.edit_original_response(content = "User could not be found.")
+                return
+        if user_id == None:
+            await interaction.edit_original_response(content = "User could not be found.")
+            return
+        
+    # Quickly pull gist
+    await sync_gist.pull_gist()
+
     
     # Load the blacklist and whitelist data
     data: dict
@@ -2265,30 +2308,34 @@ async def blacklist_add(interaction: discord.Interaction, user_id: discord.Membe
     whitelist = data.get("whitelist", [])
     blacklist = data.get("blacklist", [])
 
-    if str(interaction.user.id) in admins:
+    if interaction.user.id in admins:
         # Check if whitelist exists and if the user is in it
-        if user_id.id in whitelist:
-            await interaction.followup.send("User is in the whitelist and cannot be added to the blacklist.")
+        if user_id in whitelist:
+            await interaction.edit_original_response(content = "User is in the whitelist and cannot be added to the blacklist.")
             return
 
-        if user_id.id == owner_id:
-            await interaction.followup.send("You cannot add the Owner to the blacklist. Nice try.")
+        if user_id == owner_id:
+            await interaction.edit_original_response(content = "You cannot add the Owner to the blacklist. Nice try.")
             return
 
-        if user_id.id == client.user.id:
-            await interaction.followup.send("You cannot add the Bot to the blacklist. Nice try.")
+        if user_id == client.user.id:
+            await interaction.edit_original_response(content = "You cannot add the Bot to the blacklist. Nice try.")
             return
 
         # Add to blacklist if not already present
-        if user_id.id not in blacklist:
-            blacklist.append({"uid": user_id.id, "reason": reason})
+        if user_id not in blacklist:
+            blacklist.append({"uid": user_id, "reason": reason})
             data["blacklist"] = blacklist
             save_data(data)
-            await interaction.followup.send("Added to blacklist!")
+            await interaction.edit_original_response(content = "Added to blacklist!")
+            await sync_gist.push_gist()
+            return
         else:
-            await interaction.followup.send("User is already in the blacklist.")
+            await interaction.edit_original_response(content = "User is already in the blacklist.")
+            return
     else:
-        await interaction.followup.send("You're not recognized as a Natsukian. You can't add people to the blacklist.")
+        await interaction.edit_original_response(content = "You're not recognized as a Natsukian. You can't add people to the blacklist.")
+        return
 
 
 #@client.tree.command(name="blacklist")
@@ -2317,11 +2364,54 @@ async def blacklist_add(interaction: discord.Interaction, user_id: discord.Membe
 #    
 #    await interaction.followup.send(embed=embed)
 
+class UserNotFound(Exception): ...
 
 @client.tree.command(name="blacklist_remove")
-async def blacklist_remove(interaction: discord.Interaction, user_id: discord.Member):
+@app_commands.describe(user_id_str = "The UserID of the User you wish to add.")
+@app_commands.describe(user_mention = "The Mention of the User you wish to add.")
+@app_commands.describe(force_remove = "Whether you wish to skip checking if the user exists and go straight to removing them.")
+async def blacklist_remove(interaction: discord.Interaction, user_id_str: str = None, user_mention: discord.Member = None, force_remove: bool = False):
+    """Remove user from blacklist via ID or mention.
+
+    Args:
+        interaction (discord.Interaction): The interaction itself.
+        user_id_str (int, optional): The user ID to remove. Defaults to None.
+        user_mention (discord.Member, optional): A `discord.Member` akin to pinging someone. Defaults to None.
+        force_remove (bool, optional): Skip validating the User and simply check if `user_id` or `user_mention.id` can be removed. Defaults to False.
+
+    Raises:
+        UserNotFound: User ID could not be found.
+    """
     ''' Bot Owner only command - Removes someone from blacklist using their UserID '''
     await interaction.response.defer()
+
+    
+    if user_id_str:
+        try:
+            user_id = int(user_id_str)
+        except:
+            await interaction.edit_original_response(content = "Invalid User ID set in `user_id_str`. Please retry.")
+            return
+
+    # Cover invalid things.
+    if user_id == None and user_mention == None:
+        await interaction.edit_original_response(content = "UserID and Ping not provided. Please retry.")
+    
+    # Make sure both exist properly.
+    if not force_remove:
+        if user_mention != None:
+            try:
+                user_id = user_mention.id
+            except:
+                await interaction.edit_original_response(content = f"User could not be found.")
+                return
+        if user_id == None:
+            await interaction.edit_original_response(content = "User could not be found.")
+            return
+        
+    # Quickly pull gist
+    await sync_gist.pull_gist()
+
 
     # Load the blacklist and whitelist data
     data: dict
@@ -2332,23 +2422,24 @@ async def blacklist_remove(interaction: discord.Interaction, user_id: discord.Me
     whitelist = data.get("whitelist", [])
     blacklist = data.get("blacklist", [])
 
-    if str(interaction.user.id) in admins:
+    if interaction.user.id in admins:
         # Check if the user is in the whitelist
-        if user_id.id in whitelist:
-            await interaction.followup.send("User is in the whitelist and cannot be removed from the blacklist.")
+        if user_id in whitelist:
+            await interaction.edit_original_response("User is in the whitelist and cannot be removed from the blacklist.")
             return
 
         # Remove from blacklist if present
-        updated_blacklist = [entry for entry in blacklist if entry['uid'] != user_id.id]
+        updated_blacklist = [entry for entry in blacklist if entry['uid'] != user_id]
 
         if len(updated_blacklist) < len(blacklist):
             data["blacklist"] = updated_blacklist
             save_data(data)
-            await interaction.followup.send(f"Removed user {user_id.id} from the blacklist.")
+            await interaction.edit_original_response(content = f"Removed user {user_id} from the blacklist.")
+            await sync_gist.push_gist()
         else:
-            await interaction.followup.send("User not found in the blacklist.")
+            await interaction.edit_original_response(content = "User not found in the blacklist.")
     else:
-        await interaction.followup.send("You're not recognized as a Natsukian. You can't add people to the blacklist.")
+        await interaction.edit_original_response(content = "You're not recognized as a Natsukian. You can't add people to the blacklist.")
         
 
 @client.tree.command(name="test_error")
@@ -2366,6 +2457,9 @@ async def print_latency(client):
     while True:
         print(f"Current ping: {(client.latency * 100):.3f}")
         await asyncio.sleep(ping_delay)
+
+
+# Update and so on the longterm_lists.json
 
 
 @client.event
@@ -2450,11 +2544,22 @@ async def on_ready():      # Check if it runs
                 "   \"niggerx\": []\n"
                 "}"
             )
+    
+    # Check if sync has already been started
+    if not hasattr(client, 'sync_task_started'):
+
+        # Set the guard attribute so it doesn't start again
+        client.sync_task_started = True
+
+        # Start the sync loop
+        client.loop.create_task(sync_gist.start_sync_loop())
+
+        print("Started sync loop.")
 
 
 print("Please wait a few seconds for the bot to connect")
 
 if is_debugging:
-    client.run(botToken)
+    client.run(os.getenv("DISCORD_TOKEN"))
 else:
-    client.run(botToken, log_handler=None)
+    client.run(os.getenv("DISCORD_TOKEN"), log_handler=None)

@@ -1,3 +1,4 @@
+aiofiles
 aiohttp
 asyncio
 bs4
@@ -5,6 +6,7 @@ datetime
 defusedxml
 discord
 discord.py
+dotenv
 eyed3
 ffmpeg
 importlib.metadata

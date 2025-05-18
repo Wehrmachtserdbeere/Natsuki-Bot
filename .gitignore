@@ -1,4 +1,4 @@
-.env.py
+.env
 botToken.py
 longterm_lists.json
 /__pycache__/

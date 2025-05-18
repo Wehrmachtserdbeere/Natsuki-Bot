@@ -4,9 +4,9 @@
 ## Installation
 
 1. Clone the repository or download the source directly and put it into a folder with nothing else inside.
-2. Create and fill these files:
-   - `botToken.py`
+2. Create and fill these files (if they do not exist yet):
    - `longterm_lists.json`
+   - `.env`
 3. If you run this via Termux, you **must** run these commands in this order:
 
     ```
@@ -33,21 +33,6 @@
 
 
 ### **What you will put into each file:**
-
-#### `botToken.py`
-
-```py
-botToken = "your.bot.token"
-```
-
-To get your Bot Token:
-1. Go to the [Discord Developer Portal](https://discordapp.com/developers/applications/).
-2. Give your bot a name.
-3. Go into the **Bot** menu.
-4. Press **Add Bot**.
-5. Press **Click to Reveal Token** - this is your Bot Token.
-
-**Do not share your Bot Token!**
 
 #### `longterm_lists.json`
 
@@ -79,6 +64,41 @@ This file will be automatically created after running the bot once. Add the Serv
 ```
 
 Falls back on a default value if a given Server is not in the list.
+
+#### `.env`
+
+**FIRST:** <br/>
+[Create a Github Token](https://github.com/settings/tokens/new) and save it!
+
+**AFTER THAT:** <br/>
+Create a new [Github Gist](https://gist.github.com/) and name the file `longterm_lists.json` (I recomment you name the gist the same).
+
+**NEXT:** <br/>
+Get your Bot Token:
+1. Go to the [Discord Developer Portal](https://discordapp.com/developers/applications/).
+2. Give your bot a name.
+3. Go into the **Bot** menu.
+4. Press **Add Bot**.
+5. Press **Click to Reveal Token** - this is your Bot Token.
+
+**Do not share your Bot Token!**
+
+Now put them in your `.env` file.
+
+<sup><span style="color:grey">Code block set to Python markdown for reading convenience. Hashtags / Pound Signs can be included in the final file.</span></sup>
+
+```py
+# .env
+DISCORD_TOKEN=your_discord.bot_token
+
+# If it is expired get a new one here:
+# https://github.com/settings/tokens/new
+# The GIST_ID is the last part of the URL.
+GITHUB_TOKEN=your_github_token
+GIST_ID=theIDyouGETwhenYOUcreateAgist
+```
+
+**MAKE SURE YOU ADD `.env` TO YOUR `.gitignore` FILE!**
 
 ## Edit the Bot
 
@@ -131,7 +151,7 @@ To check ASCII art, create a Python file that prints the ASCII and run it in Com
 - You **do not** need to disclose AI tools like brush smoothing or line tools.
 - If your digital art could be mistaken for traditional, clarify that it is digital.
 
-Keep the width around **64 characters**.
+Keep the width around **64 characters**. The less, the better.
 
 ## Music
 
@@ -164,4 +184,4 @@ This isn't part of the "documentation," just wanted to say **thank you** for usi
 
 I've worked on this for years (since **2018**!), and while the music system aged me like 20 years through sheer suffering, it's still fun!
 
-Enjoy the bot! \^-\^  
+Enjoy the bot! **\^-\^**
