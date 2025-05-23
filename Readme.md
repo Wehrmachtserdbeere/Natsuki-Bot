@@ -1,5 +1,28 @@
+<!-- markdownlint-disable no-inline-html no-trailing-punctuation -->
 
 # Natsuki Bot
+
+<!-- TOC start (generated with https://github.com/derlin/bitdowntoc) -->
+
+Table of Content
+
+- [Natsuki Bot](#natsuki-bot)
+  - [Installation](#installation)
+    - [**What you will put into each file:**](#what-you-will-put-into-each-file)
+      - [`longterm_lists.json`](#longterm_listsjson)
+      - [`twitter_embedder_settings.json`](#twitter_embedder_settingsjson)
+      - [`.env`](#env)
+  - [Edit the Bot](#edit-the-bot)
+  - [Reporting Bugs](#reporting-bugs)
+  - [Supporting the Bot](#supporting-the-bot)
+  - [Images and ASCII Art](#images-and-ascii-art)
+    - [**Contributing ASCII Art to Examples**](#contributing-ascii-art-to-examples)
+  - [Music](#music)
+    - [**Playlists do not work!**](#playlists-do-not-work)
+  - [Termux Notes](#termux-notes)
+  - [Dev Notes](#dev-notes)
+
+<!-- TOC end -->
 
 ## Installation
 
@@ -9,7 +32,7 @@
    - `.env`
 3. If you run this via Termux, you **must** run these commands in this order:
 
-    ```
+    ```plaintext
     pkg install python pip
     pkg install binutil
     pkg install python-tkinter
@@ -21,7 +44,7 @@
 
 4. If using Command Prompt, go to the bot directory and run the following command:
 
-    ```
+    ```cmd
     pip install -r requirements.txt
     ```
 
@@ -30,7 +53,6 @@
 5. Set up the environment (Guaranteed to work in Python 3.13.3).
 6. Edit the bot (More information below).
 7. Run the bot.
-
 
 ### **What you will put into each file:**
 
@@ -54,16 +76,18 @@ This file will be automatically created after running the bot once. Add the Serv
 
 ```json
 {
-  "vxtwitter": [
+  "vxtwitter.com": [
     123456789,
     234567890
   ],
-  "fxtwitter": [],
+  "fxtwitter.com": [],
   "etc...": []
 }
 ```
 
-Falls back on a default value if a given Server is not in the list.
+Sites **must** be HTTP**S**!
+
+If a Server is not in the list, it defaults to the first entry in the file. In the above example, it would default to `vxtwitter.com`.
 
 #### `.env`
 
@@ -71,10 +95,11 @@ Falls back on a default value if a given Server is not in the list.
 [Create a Github Token](https://github.com/settings/tokens/new) and save it!
 
 **AFTER THAT:** <br/>
-Create a new [Github Gist](https://gist.github.com/) and name the file `longterm_lists.json` (I recomment you name the gist the same).
+Create a new [Github Gist](https://gist.github.com/) and name the file `longterm_lists.json` (I recommend you name the gist the same).
 
 **NEXT:** <br/>
 Get your Bot Token:
+
 1. Go to the [Discord Developer Portal](https://discordapp.com/developers/applications/).
 2. Give your bot a name.
 3. Go into the **Bot** menu.
@@ -125,7 +150,7 @@ Please **do not** contact me if your changes include political, religious, or id
 
 *If you decide to make a bot derived from this, I kindly request that you do not use the "Natsuki" name or imagery.*
 
-## Images / ASCII Art
+## Images and ASCII Art
 
 When starting the bot, you may see ASCII image art. You can remove this by setting `enable_ascii` to `False` inside `settings.py`.
 
@@ -140,9 +165,9 @@ To check ASCII art, create a Python file that prints the ASCII and run it in Com
 
 **Compatibility with anything other than Windows 10 Command Prompt is **not** guaranteed!**
 
-### **Important:** The ASCII art must **only** use UTF-8 characters!
+**Important:** The ASCII art must **only** use UTF-8 characters!
 
-#### **Contributing ASCII Art to Examples**
+### **Contributing ASCII Art to Examples**
 
 - Open a suggestion issue to add your ASCII art. You can also do this on the [Support Server](https://discord.gg/9EAGVZUt2Y).
 - Credit the original artist.
@@ -173,9 +198,10 @@ This is a rudimentary solution after major bots removed YouTube playback for an 
 ## Termux Notes
 
 ~~- Because Termux uses a different file system, the `webm_downloads` folder will be named `.\webm_downloads`. This will be hidden by default.~~ **FIXED IN VERSIONS >=2.3.26**
-  - ~~Use **FX File Explorer** on Android to manually clear it if necessary.~~ **FIXED IN VERSIONS >=2.3.26**
-  - ~~Location in **FX File Explorer**: `Home > [Your NatsukiBot Installation Directory] > .\webm_downloads`.~~ **FIXED IN VERSIONS >=2.3.26**
-  - As of **version >=2.3.26**, the folder is properly named `webm_downloads` on both **Windows** and **Termux**, and the auto-delete feature thus works correctly on both platforms. If you used versions **2.3.25 or earlier**, you might have to delete the old folder manually via `rm -d '.\webm_downloads'`.
+
+- ~~Use **FX File Explorer** on Android to manually clear it if necessary.~~ **FIXED IN VERSIONS >=2.3.26**
+- ~~Location in **FX File Explorer**: `Home > [Your NatsukiBot Installation Directory] > .\webm_downloads`.~~ **FIXED IN VERSIONS >=2.3.26**
+- As of **version >=2.3.26**, the folder is properly named `webm_downloads` on both **Windows** and **Termux**, and the auto-delete feature thus works correctly on both platforms. If you used versions **2.3.25 or earlier**, you might have to delete the old folder manually via `rm -d '.\webm_downloads'`.
 - Termux is a **lower priority** than Windows, with other OS support even lower. However, since I also use Termux, **compatibility is a top priority**. Expect nearly the same functionality as on PC.
 
 ## Dev Notes

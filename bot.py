@@ -6,7 +6,7 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT"
-__version__ = "2.5.0"
+__version__ = "2.5.1"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/9EAGVZUt2Y" # EDIT THIS
@@ -994,6 +994,17 @@ list_ = [
     "cnnuy"
 ]
 
+class NoTopLevelDomainException(Exception):
+    """Custom exception for missing top-level domains in a list of domains.
+
+    Args:
+        Exception (_type_): Base exception class.
+        bad_domains (list): List of domains that are missing a valid top-level domain.
+    """
+    def __init__(self, bad_domains):
+        message = f"The following domains are missing a valid top-level domain: {', '.join(bad_domains)}"
+        super().__init__(message)
+        self.bad_domains = bad_domains
 
 @client.event
 async def on_message(message: discord.Message):
@@ -1041,23 +1052,31 @@ async def on_message(message: discord.Message):
         youtube_alt = "https://youtube.com/watch?v="
         bilibili_alt = "https://www.bilibiliez.com"
 
-        
+    
+        # Ensure the `twitter_embedder_settings.json` has the appropriate formatting.
+        # E.g. `"vxtwitter.com": [ 12345, 67890 ]`
         try:
             with open("twitter_embedder_settings.json") as twtfile:
                 data = json.load(twtfile)
-            
-            id = message.guild.id
 
-            if id in data.get("vxtwitter", []):
-                twitter_alt = "https://vxtwitter.com"
-            elif id in data.get("fxtwitter", []):
-                twitter_alt = "https://fxtwitter.com"
-            elif id in data.get("niggerx", []):
-                twitter_alt = "https://niggerx.com"
-            else: # default
-                twitter_alt = "https://niggerx.com"
-        except:
-            twitter_alt = "https://niggerx.com"
+            id = message.guild.id
+            first_domain : str
+            first_domain = next(iter(data))
+            twitter_alt = f"https://{first_domain}"  # default to first domain in file
+
+            tld_pattern = re.compile(r"\.[a-z]{2,}(\.[a-z]{2,})?$", re.IGNORECASE)
+            invalid_domains = [domain for domain in data if not tld_pattern.search(domain)]
+
+            if invalid_domains:
+                raise NoTopLevelDomainException(invalid_domains)
+
+            for domain, guild_ids in data.items():
+                if id in guild_ids:
+                    twitter_alt = f"https://{domain}"
+                    break
+                
+        except Exception:
+            twitter_alt = "https://fxtwitter.com"
 
         ###
         ### Quick info
@@ -2546,15 +2565,16 @@ async def on_ready():      # Check if it runs
             )
     
     # Check if sync has already been started
-    if not hasattr(client, 'sync_task_started'):
+    ###if not hasattr(client, 'sync_task_started'):
 
         # Set the guard attribute so it doesn't start again
-        client.sync_task_started = True
+        ### client.sync_task_started = True
 
         # Start the sync loop
-        client.loop.create_task(sync_gist.start_sync_loop())
+        # Temporarily disabled to check if it works without it.
+        ### client.loop.create_task(sync_gist.start_sync_loop())
 
-        print("Started sync loop.")
+        ###print("Started sync loop.")
 
 
 print("Please wait a few seconds for the bot to connect")
