@@ -6,7 +6,7 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT"
-__version__ = "2.5.1"
+__version__ = "2.5.2"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/9EAGVZUt2Y" # EDIT THIS
@@ -1036,12 +1036,14 @@ async def on_message(message: discord.Message):
 
     ### Link Renamer ###
 
+    ## TODO - Make it so crocodile mouths ("<" and ">", angle brackets) are kept when used!
+
     # List of domains to exclude from processing
     excluded_domains = [
         
     ]
 
-    links = re.findall(r"https?://(?:www\.)?[\w.-]+/[^\s`'\"<>\]]*", message.content)
+    links = re.findall(r"(?:(\|\|)?(<)?)?(https?://(?:www\.)?[\w.-]+/[^\s`'\"<>\]]*)(?(2)>)(?(1)\|\|)", message.content)
     has_embed = False
 
     if links:
@@ -1118,13 +1120,20 @@ async def on_message(message: discord.Message):
         }
 
         final_list = []
-        for link in links:
-            link = link.strip('`"\'<>[]')  # Remove unwanted trailing/wrapping characters
+        for spoiler, bracket, url in links:
+            clean_url = url.strip('`"\'')  # Avoid stripping angle brackets or pipes
+
             for original, replacement in replacements.items():
-                if link.startswith(original):
-                    final_list.append(link.replace(original, replacement, 1))
+                if clean_url.startswith(original):
+                    replaced = clean_url.replace(original, replacement, 1)
+
+                    # Reconstruct the original surround
+                    formatted = f"{spoiler or ''}{bracket or ''}{replaced}{'>' if bracket else ''}{spoiler or ''}"
+                    final_list.append(formatted)
                     has_embed = True
                     break
+
+
 
 
         # Remove embeds from the original message
@@ -1133,9 +1142,12 @@ async def on_message(message: discord.Message):
             message = await message.channel.fetch_message(message.id)
             await message.edit(suppress=True)
 
-        # Only send the first post
+        # Send all converted:
         if final_list:
-            await message.channel.send(final_list[0])
+            endmessage : str = "\n".join(final_list)
+            print(f"Sending endmessage | {endmessage}")
+            await message.channel.send(endmessage)
+
     
 
     ### Webm Converter ###
