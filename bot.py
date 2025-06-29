@@ -6,7 +6,7 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT"
-__version__ = "2.5.3"
+__version__ = "2.5.4"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/9EAGVZUt2Y" # EDIT THIS
@@ -1048,7 +1048,7 @@ async def on_message(message: discord.Message):
 
     if links:
         tiktok_alt = "https://vxtiktok.com"
-        instagram_alt = "https://www.instagramez.com" # Seems to be broken | Apparently works as of June 19th, 2025?
+        #instagram_alt = "https://www.instagramez.com" # Seems to be broken | Apparently works as of June 19th, 2025? | It does not, don't believe them.
         reddit_alt = "https://www.redditez.com"
         pixiv_alt = "https://phixiv.net"
         youtube_alt = "https://youtube.com/watch?v="
@@ -1105,8 +1105,8 @@ async def on_message(message: discord.Message):
             "https://www.girlcockx.com": twitter_alt, # Literally just a VXTwitter referrer
             "https://tiktok.com": tiktok_alt,
             "https://www.tiktok.com": tiktok_alt,
-            "https://instagram.com": instagram_alt,
-            "https://www.instagram.com": instagram_alt,
+            #"https://instagram.com": instagram_alt,
+            #"https://www.instagram.com": instagram_alt,
             "https://pixiv.net": pixiv_alt,
             "https://www.pixiv.net": pixiv_alt,
             "https://youtube.com/shorts/": youtube_alt,
