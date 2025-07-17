@@ -298,7 +298,7 @@ def save_data(data, filename="./longterm_lists.json"):
 class NatsukiActivity:
     '''Represents a collection of activity-related things.'''
     
-    async def set_random_activity(activity_text_data : str):
+    def set_random_activity(activity_text_data : str):
         '''Set a random activity, defaults to "Chilling" if "activity_text_data" is faulty.'''
         try:
             activity_text = random.choice(activity_text_data["default"])
@@ -307,20 +307,17 @@ class NatsukiActivity:
                 name = "Custom Status", # Does nothing, but is required.
                 state = activity_text,
             )
-            await client.change_presence(
-                activity = activity
-            )
         except:
             activity = discord.CustomActivity(
                 type = discord.ActivityType.custom,
                 name = "Custom Status", # Does nothing, but is required.
                 state = "Chilling",
             )
-            await client.change_presence(
-                activity = activity
-            )
+        asyncio.create_task(client.change_presence(
+            activity = activity
+        ))
     
-    async def set_voice_activity(activity_text_data : str):
+    def set_voice_activity(activity_text_data : str):
         '''Sets a random voice-related activity'''
         try:
             activity_text = random.choice(activity_text_data["voice"])
@@ -329,20 +326,17 @@ class NatsukiActivity:
                 name = "Custom Status", # Does nothing, but is required.
                 state = activity_text,
             )
-            await client.change_presence(
-                activity = activity
-            )
         except:
             activity = discord.CustomActivity(
                 type = discord.ActivityType.custom,
                 name = "Custom Status", # Does nothing, but is required.
                 state = "Speaking",
             )
-            await client.change_presence(
-                activity = activity
-            )
+        asyncio.create_task(client.change_presence(
+            activity = activity
+        ))
     
-    async def set_streaming_activity(activity_text_data : str):
+    def set_streaming_activity(activity_text_data : str):
         '''Sets a random streaming-related (i.E. streaming music) activity'''
         try:
             activity_text = random.choice(activity_text_data["streaming"])
@@ -351,18 +345,15 @@ class NatsukiActivity:
                 name = "Custom Status", # Does nothing, but is required.
                 state = activity_text,
             )
-            await client.change_presence(
-                activity = activity
-            )
         except:
             activity = discord.CustomActivity(
                 type = discord.ActivityType.custom,
                 name = "Custom Status", # Does nothing, but is required.
                 state = "Streaming",
             )
-            await client.change_presence(
-                activity = activity
-            )
+        asyncio.create_task(client.change_presence(
+            activity = activity
+        ))
 
 # Because I often accidentally write the wrong name.
 NatsukiStatus = NatsukiActivity
@@ -1552,11 +1543,11 @@ async def _play(interaction: discord.Interaction, url: str):
 
                 # In the case that the user disconnects while starting the play command, the bot will gracefully handle the exception.
                 try:
-                    await NatsukiActivity.set_streaming_activity(activity_text_data)
-                    vc.play(playnow, after = lambda x: asyncio.run(NatsukiActivity.set_voice_activity(activity_text_data)))
+                    NatsukiActivity.set_streaming_activity(activity_text_data)
+                    vc.play(playnow, after = lambda x: NatsukiActivity.set_voice_activity(activity_text_data))
                 except discord.errors.ClientException:
                     # No error logging needed, this is graceful and needs no fixing, likely ever... things said before a fatal error xD
-                    asyncio.run(NatsukiActivity.set_voice_activity(activity_text_data))
+                    NatsukiActivity.set_voice_activity(activity_text_data)
                     await interaction.edit_original_response(content="Not connected to voice.")
                 
                 while vc.is_playing():
@@ -1771,7 +1762,7 @@ async def play_next(interaction : discord.Interaction):
             try:
                 vc.play(playnow)
                 if not is_playing:
-                    await NatsukiActivity.set_streaming_activity(activity_text_data)
+                    NatsukiActivity.set_streaming_activity(activity_text_data)
             except discord.errors.ClientException:
                 # No error log needed.
                 await interaction.edit_original_response(content="Not connected to voice.")
@@ -1782,7 +1773,7 @@ async def play_next(interaction : discord.Interaction):
             await play_next(interaction)
         else:
             await interaction.channel.send(content = "Finished playing.")
-            await NatsukiActivity.set_voice_activity(activity_text_data)
+            NatsukiActivity.set_voice_activity(activity_text_data)
 
     except discord.errors.HTTPException:
         await interaction.channel.send(content = "File too large, try again.")
@@ -1823,7 +1814,7 @@ async def skip(interaction : discord.Interaction):
         vc = interaction.guild.voice_client
         if vc.is_playing():
             vc.stop()
-            await NatsukiActivity.set_voice_activity(activity_text_data)
+            NatsukiActivity.set_voice_activity(activity_text_data)
     except Exception as e:
         logger.error(f"[v{__version__}] || Unknown Exception: {e}")
         await interaction.followup.send(content = "Error! Something happened!\n" + str(e))
@@ -1904,8 +1895,8 @@ async def rr_play(interaction : discord.Interaction):
 
                 song = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(mp3))
 
-                await NatsukiActivity.set_streaming_activity(activity_text_data)
-                vc.play(song, after=lambda x: asyncio.run(NatsukiActivity.set_voice_activity(activity_text_data)))
+                NatsukiActivity.set_streaming_activity(activity_text_data)
+                vc.play(song, after=lambda x: NatsukiActivity.set_voice_activity(activity_text_data))
 
             except discord.errors.HTTPException:
                 await interaction.edit_original_response(content = "File too large, try again.")
@@ -2512,18 +2503,18 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
         if len(vc_channel.members) < 2:
             vc: discord.VoiceClient = vc_channel.guild.voice_client
             if vc is None:
-                await NatsukiActivity.set_random_activity(activity_text_data)
+                NatsukiActivity.set_random_activity(activity_text_data)
                 return  # Bot is not connected to a voice channel
 
             if vc.is_playing():
                 # Run a loop until the bot finishes playing
                 while vc.is_playing():
                     await asyncio.sleep(1)
-                await NatsukiActivity.set_random_activity(activity_text_data)
+                NatsukiActivity.set_random_activity(activity_text_data)
                 await vc.disconnect()
             else:
                 # Disconnect the bot immediately
-                await NatsukiActivity.set_random_activity(activity_text_data)
+                NatsukiActivity.set_random_activity(activity_text_data)
                 await vc.disconnect()
 
 
@@ -2550,7 +2541,7 @@ async def on_ready():      # Check if it runs
     # Print latency every 30 seconds
     # Don't do if disabled (set to -1)
     if not has_started:
-        await NatsukiActivity.set_random_activity(activity_text_data)
+        NatsukiActivity.set_random_activity(activity_text_data)
         if not ping_delay == -1:
             asyncio.create_task(print_latency(client))
             has_started = True
