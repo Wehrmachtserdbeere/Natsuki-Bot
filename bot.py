@@ -44,7 +44,7 @@ import datetime
 from bs4 import BeautifulSoup
 from discord.ext.commands import Context, Greedy
 from typing import Optional, Literal
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import re
 from pathlib import Path
 import yt_dlp
@@ -113,6 +113,8 @@ folders = [
     "D:\\Alles\\Alle Musik und Videos\\RR under 8MB\\", # <-- EDIT this to your RR music. RR = Real Rock.
     ""
 ]
+
+last_stream_event = datetime.now(timezone.utc)
 
 # For on_ready, so it only creates one single task.
 has_started = False
@@ -1544,7 +1546,7 @@ async def _play(interaction: discord.Interaction, url: str):
                 # In the case that the user disconnects while starting the play command, the bot will gracefully handle the exception.
                 try:
                     NatsukiActivity.set_streaming_activity(activity_text_data)
-                    vc.play(playnow, after = lambda x: NatsukiActivity.set_voice_activity(activity_text_data))
+                    vc.play(playnow) # No "after" needed, we will handle the text setting elsewhere
                 except discord.errors.ClientException:
                     # No error logging needed, this is graceful and needs no fixing, likely ever... things said before a fatal error xD
                     NatsukiActivity.set_voice_activity(activity_text_data)
@@ -2488,34 +2490,88 @@ async def print_latency(client):
 async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
     await client.wait_until_ready()
 
+    # If bot is in VC but everyone else left
+    # For some reason, this doesn't work? When leaving VC, this event might not be firing.
+    if after.channel is not None:
+        vc_channel = after.channel
+        if len(vc_channel.members) <= 1 and vc_channel.members[0].id == client.user.id:
+            print("Bot is alone in VC")
+            vc = vc_channel.guild.voice_client
+            if vc:
+                asyncio.create_task(wait_and_disconnect(vc))
+
+    # Only care about the bot's own voice status
     if member.id == client.user.id:
         return
+    
+    # Bot joined VC
+    if before.channel is None and after.channel is not None:
+        NatsukiActivity.set_voice_activity(activity_text_data)
+    
+    # Bot left VC
+    elif before.channel is not None and after.channel is None:
+        NatsukiActivity.set_random_activity(activity_text_data)
+    
+    # Bot started streaming
+    elif not before.self_stream and after.self_stream:
+        await safe_stream_update()
+    
+    # Bot stopped streaming but still in VC
+    elif before.self_stream and not after.self_stream:
+        NatsukiActivity.set_voice_activity(activity_text_data)
+    
 
-    # Check if the bot is in a voice channel
-    if before.channel is not None:
-        vc_channel: discord.VoiceChannel = before.channel
-    else:
-        vc_channel: discord.VoiceChannel = after.channel
+    #
+    # Temporarily commented out to see its behavior with the new handling above.
+    # Will be deleted if the above works consistently.
+    #
+    ## Check if the bot is in a voice channel
+    #if before.channel is not None:
+    #    vc_channel: discord.VoiceChannel = before.channel
+    #else:
+    #    vc_channel: discord.VoiceChannel = after.channel
+    #
+    ## If the bot is in the voice channel (if client's user ID is in the list of member IDs)
+    #if client.user.id in [member.id for member in vc_channel.members]:
+    #    # If there are no members in the voice channel apart from the bot. BOT IS COUNTED! Aka. size is "1" if bot is still in.
+    #    if len(vc_channel.members) < 2:
+    #        vc: discord.VoiceClient = vc_channel.guild.voice_client
+    #        if vc is None:
+    #            NatsukiActivity.set_random_activity(activity_text_data)
+    #            return  # Bot is not connected to a voice channel
+    #
+    #        if vc.is_playing():
+    #            # Run a loop until the bot finishes playing
+    #            while vc.is_playing():
+    #                await asyncio.sleep(1)
+    #            NatsukiActivity.set_random_activity(activity_text_data)
+    #            await vc.disconnect()
+    #        else:
+    #            # Disconnect the bot immediately
+    #            NatsukiActivity.set_random_activity(activity_text_data)
+    #            await vc.disconnect()
 
-    # If the bot is in the voice channel (if client's user ID is in the list of member IDs)
-    if client.user.id in [member.id for member in vc_channel.members]:
-        # If there are no members in the voice channel apart from the bot. BOT IS COUNTED! Aka. size is "1" if bot is still in.
-        if len(vc_channel.members) < 2:
-            vc: discord.VoiceClient = vc_channel.guild.voice_client
-            if vc is None:
-                NatsukiActivity.set_random_activity(activity_text_data)
-                return  # Bot is not connected to a voice channel
 
-            if vc.is_playing():
-                # Run a loop until the bot finishes playing
-                while vc.is_playing():
-                    await asyncio.sleep(1)
-                NatsukiActivity.set_random_activity(activity_text_data)
-                await vc.disconnect()
-            else:
-                # Disconnect the bot immediately
-                NatsukiActivity.set_random_activity(activity_text_data)
-                await vc.disconnect()
+async def wait_and_disconnect(vc : discord.VoiceClient):
+    ''' Waits while VC is playing, and disconnects upon finishing. '''
+    if vc is None:
+        print("No VC.")
+        return
+
+    while vc.is_playing():
+        print("Playing...")
+        await asyncio.sleep(1)
+    NatsukiActivity.set_random_activity(activity_text_data)
+    await vc.disconnect()
+
+
+async def safe_stream_update():
+    global last_stream_event
+    now = datetime.now(timezone.utc)
+    if now - last_stream_event > timedelta(seconds=2):
+        last_stream_event = now
+        NatsukiActivity.set_streaming_activity(activity_text_data)
+
 
 
 @client.event
@@ -2567,6 +2623,10 @@ async def on_ready():      # Check if it runs
                 "}"
             )
     
+
+    # Save loop for usage later (currently in the `play` command)
+    client.loop_holder = asyncio.get_running_loop()
+
     # Check if sync has already been started
     ###if not hasattr(client, 'sync_task_started'):
 
