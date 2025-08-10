@@ -186,7 +186,7 @@ ffmpeg_options = {
 }
 
 ytdl_format_options = {
-    'format': '234/233/18', # Specific fallbacks
+    'format': 'bestaudio/best/18', # Specific fallbacks
     'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
     'restrictfilenames': True,
     'noplaylist': True,
