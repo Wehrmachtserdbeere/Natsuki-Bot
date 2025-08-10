@@ -186,7 +186,7 @@ ffmpeg_options = {
 }
 
 ytdl_format_options = {
-    'format': 'bestaudio/best',
+    'format': '234/233/18', # Specific fallbacks
     'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
     'restrictfilenames': True,
     'noplaylist': True,
@@ -1509,7 +1509,7 @@ async def _play(interaction: discord.Interaction, url: str):
         vc: discord.VoiceClient
         vc = interaction.guild.voice_client
 
-        if vc == None:
+        if vc is None:
             await interaction.user.voice.channel.connect()
             vc = interaction.guild.voice_client
 
