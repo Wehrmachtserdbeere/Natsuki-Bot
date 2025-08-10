@@ -1131,7 +1131,7 @@ async def on_message(message: discord.Message):
 
         # Remove embeds from the original message
         if has_embed:
-            await asyncio.sleep(0.25) # SLOWDOWN to let embeds load. Default is 0.25, but testing with lower values. # EDIT THIS to be higher if embeds still show up.
+            # await asyncio.sleep(0.25) # SLOWDOWN to let embeds load. Default is 0.25, but testing with lower values. # EDIT THIS to be higher if embeds still show up.
             message = await message.channel.fetch_message(message.id)
             await message.edit(suppress=True)
 
