@@ -6,7 +6,7 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT"
-__version__ = "2.5.6"
+__version__ = "2.5.7"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/9EAGVZUt2Y" # EDIT THIS
@@ -108,9 +108,9 @@ client = commands.Bot(
     intents=discord.Intents.all()
     )
 
-mp3_path = list(Path("D:\\Alles\\Alle Musik und Videos\\RR\\").rglob("*.mp3")) # <-- EDIT this to whatever folder your RR music is in.
+mp3_path = list(Path("/media/HDD/Alles/Alle Musik und Videos/RR/").rglob("*.mp3")) # <-- EDIT this to whatever folder your RR music is in.
 folders = [
-    "D:\\Alles\\Alle Musik und Videos\\RR under 8MB\\", # <-- EDIT this to your RR music. RR = Real Rock.
+    "/media/HDD/Alles/Alle Musik und Videos/RR/", # <-- EDIT this to your RR music. RR = Real Rock.
     ""
 ]
 
@@ -394,7 +394,7 @@ if not is_phone:
             uid, reason = result
             await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else: 
-            imgimg = "D:\\Alles\\Alle Bilder\\DDLC\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\DDLC")) # <-- EDIT this to any path with images you like.
+            imgimg = "/media/HDD/Alles/Alle Bilder/DDLC/" + random.choice(os.listdir("/media/HDD/Alles/Alle Bilder/DDLC")) # <-- EDIT this to any path with images you like.
             await interaction.response.send_message(file=discord.File(imgimg))
 
 
@@ -409,7 +409,7 @@ if not is_phone:
             uid, reason = result
             await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else: 
-            shdfimg = "D:\\Alles\\Alle Bilder\\Anime People doing Wholesome Thing\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Anime People doing Wholesome Thing")) # <-- EDIT this to any path with images you like.
+            shdfimg = "/media/HDD/Alles/Alle Bilder/Anime People doing Wholesome Thing/" + random.choice(os.listdir("/media/HDD/Alles/Alle Bilder/Anime People doing Wholesome Thing")) # <-- EDIT this to any path with images you like.
             await interaction.response.send_message(file=discord.File(shdfimg))
     
     @client.tree.command(name="fate")                           # Fate image
@@ -422,7 +422,7 @@ if not is_phone:
             uid, reason = result
             await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else:
-            fateimg = "D:Alles\\Alle Bilder\\Fate\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Fate")) # <-- EDIT this if you have a folder for Fate images.
+            fateimg = "/media/HDD/Alles/Alle Bilder/Fate/" + random.choice(os.listdir("/media/HDD/Alles/Alle Bilder/Fate")) # <-- EDIT this if you have a folder for Fate images.
             await interaction.response.send_message(file=discord.File(fateimg))
     
     
@@ -436,7 +436,7 @@ if not is_phone:
             uid, reason = result
             await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else:
-            tanyaimg = "D:\\Alles\\Alle Bilder\\Tanya Degurechaff\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Tanya Degurechaff")) # <-- EDIT this if you have a folder for images of anything called "tanya".
+            tanyaimg = "/media/HDD/Alles/Alle Bilder/Tanya Degurechaff/" + random.choice(os.listdir("/media/HDD/Alles/Alle Bilder/Tanya Degurechaff")) # <-- EDIT this if you have a folder for images of anything called "tanya".
             await interaction.response.send_message(file=discord.File(tanyaimg))
 
 
@@ -450,7 +450,7 @@ if not is_phone:
             uid, reason = result
             await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else:
-            tomboyimg = "D:\\Alles\\Alle Bilder\\Anime Tomboys\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Anime Tomboys")) # <-- EDIT this to your Anime Tomboys folder. I know you have one.
+            tomboyimg = "/media/HDD/Alles/Alle Bilder/Anime Tomboys//" + random.choice(os.listdir("/media/HDD/Alles/Alle Bilder/Anime Tomboys")) # <-- EDIT this to your Anime Tomboys folder. I know you have one.
             await interaction.response.send_message(file=discord.File(tomboyimg))
 
 
@@ -464,7 +464,7 @@ if not is_phone:
             uid, reason = result
             await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else:
-            remimg = "D:\\Alles\\Alle Bilder\\Rem\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Rem\\")) # <-- EDIT this to images of Rem.
+            remimg = "/media/HDD/Alles/Alle Bilder/Rem//" + random.choice(os.listdir("/media/HDD/Alles/Alle Bilder/Rem//")) # <-- EDIT this to images of Rem.
             await interaction.response.send_message(file=discord.File(remimg))
 
 
@@ -478,7 +478,7 @@ if not is_phone:
             uid, reason = result
             await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else:
-            klkimg = "D:\\Alles\\Alle Bilder\\Kill la Kill\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Kill la Kill\\")) # <-- EDIT this to Kill La Kill images.
+            klkimg = "/media/HDD/Alles/Alle Bilder/Kill la Kill/" + random.choice(os.listdir("/media/HDD/Alles/Alle Bilder/Kill la Kill")) # <-- EDIT this to Kill La Kill images.
             await interaction.response.send_message(file=discord.File(klkimg))
 
 
@@ -494,7 +494,7 @@ if not is_phone:
         else:
             await interaction.response.defer()
             try:
-                mp4 = "D:\\Alles\\Alle Musik und Videos\\" + random.choice(os.listdir("D:\\Alles\\Alle Musik und Videos\\")) # <-- EDIT this to a path with video memes.
+                mp4 = "/media/HDD/Alles/Alle Musik und Videos/" + random.choice(os.listdir("/media/HDD/Alles/Alle Musik und Videos/Alle Musik und Videos")) # <-- EDIT this to a path with video memes.
                 await interaction.followup.send(file=discord.File(mp4))
             except discord.errors.HTTPException:
                 await interaction.followup.send("File too large, try again.")
@@ -550,7 +550,7 @@ if not is_phone:
             uid, reason = result
             await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else:
-            chrImg = "D:\\Alles\\Alle Bilder\\Christ-chan\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Christ-chan\\")) # <-- EDIT this to a path with images of Christ Chan. Not to be confused with Chris Chan.
+            chrImg = "/media/HDD/Alles/Alle Bilder/Christ-chan/" + random.choice(os.listdir("/media/HDD/Alles/Alle Bilder/Christ-chan/")) # <-- EDIT this to a path with images of Christ Chan. Not to be confused with Chris Chan.
             await interaction.response.send_message(file=discord.File(chrImg))
 
 
@@ -564,7 +564,7 @@ if not is_phone:
             uid, reason = result
             await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else:
-            chanImg = "D:\\Alles\\Alle Bilder\\Other Chans\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Other Chans\\")) # <-- EDIT this to a path with images of other -chan characters.
+            chanImg = "/media/HDD/Alles/Alle Bilder/Other Chans" + random.choice(os.listdir("/media/HDD/Alles/Alle Bilder/Other Chans/")) # <-- EDIT this to a path with images of other -chan characters.
             await interaction.response.send_message(file=discord.File(chanImg))
 
 
@@ -578,7 +578,7 @@ if not is_phone:
             uid, reason = result
             await interaction.response.send_message(f"Could not run command! User <@{interaction.user.id}> is blacklisted.\nReason: {reason}.")
         else:
-            chanImg = "D:\\Alles\\Alle Bilder\\Megumin\\" + random.choice(os.listdir("D:\\Alles\\Alle Bilder\\Megumin\\")) # <-- EDIT this to a path with Megumin images.
+            chanImg = "/media/HDD/Alles/Alle Bilder/Megumin/" + random.choice(os.listdir("/media/HDD/Alles/Alle Bilder/Megumin")) # <-- EDIT this to a path with Megumin images.
             await interaction.response.send_message(file=discord.File(chanImg))
 
 
@@ -1040,7 +1040,7 @@ async def on_message(message: discord.Message):
     has_embed = False
 
     if links:
-        tiktok_alt = "https://vxtiktok.com"
+        #tiktok_alt = "https://vxtiktok.com" # GoyTok put in a legal demand against dylanpdx, the maintainer of vxtiktok.
         #instagram_alt = "https://www.instagramez.com" # Seems to be broken | Apparently works as of June 19th, 2025? | It does not, don't believe them.
         reddit_alt = "https://www.redditez.com"
         pixiv_alt = "https://phixiv.net"
@@ -1096,8 +1096,8 @@ async def on_message(message: discord.Message):
             "https://www.twitter.com": twitter_alt,
             "https://girlcockx.com": twitter_alt,
             "https://www.girlcockx.com": twitter_alt, # Literally just a VXTwitter referrer
-            "https://tiktok.com": tiktok_alt,
-            "https://www.tiktok.com": tiktok_alt,
+            #"https://tiktok.com": tiktok_alt, # Legal demand, the chinese are just as bad as the japanese when it comes to "muh heckin copyright"
+            #"https://www.tiktok.com": tiktok_alt, # Legal demand, the chinese are just as bad as the japanese when it comes to "muh heckin copyright"
             #"https://instagram.com": instagram_alt,
             #"https://www.instagram.com": instagram_alt,
             "https://pixiv.net": pixiv_alt,

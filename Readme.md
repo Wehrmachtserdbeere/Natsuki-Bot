@@ -42,9 +42,9 @@ Table of Content
 
     Please make sure to go into `settings.py` and change `is_phone` to `True`.
 
-4. If using Command Prompt, go to the bot directory and run the following command:
+4. If using Command Prompt, Konsole, or similar terminals, go to the bot directory and run the following command:
 
-    ```cmd
+    ```
     pip install -r requirements.txt
     ```
 
@@ -61,7 +61,7 @@ Table of Content
 ```json
 {
     "true_natsukians": [
-        "Put your own User ID here. This is used for Administrators who can use commands like adding and removing people from the blacklist."
+        "Put your own User ID here. This is used for Administrators who can use commands like adding and removing people to and from the blacklist."
     ],
     "blacklist": [],
     "whitelist": []
@@ -127,12 +127,14 @@ GIST_ID=theIDyouGETwhenYOUcreateAgist
 
 ## Edit the Bot
 
-You **must** edit the bot, otherwise, several commands will be bugged and non-functional. To find what you need to edit:
+You **must** edit the bot, otherwise, several commands will be bugged and non-functional, especially in non-Windows (<=v2.5.6) or Linux (>=v2.5.7) environments. To find what you need to edit:
 
 1. Use the search function inside `bot.py` for the word `EDIT`.
 2. Follow the steps provided in the comments.
 
-Alternatively, you can comment out or remove commands you don't need. For documentation on DiscordPy, refer to the [Official Discord.py Documentation](https://discordpy.readthedocs.io/en/stable/api.html).
+These sections refer to direct paths to folders that, very likely, do not exist on your machine. You will have to edit them, or completely remove them via editing. This will have to be done every time you update the bot.
+
+For documentation on DiscordPy, refer to the [Official Discord.py Documentation](https://discordpy.readthedocs.io/en/stable/api.html).
 
 ## Reporting Bugs
 
@@ -161,22 +163,24 @@ You can also add more ASCII art by following the JSON file format and adding you
   - `"id"` (A unique identifier, useful for debugging.)
   - `"image"` (Where the ASCII art is stored and displayed.)
 
-To check ASCII art, create a Python file that prints the ASCII and run it in Command Prompt.
+To check ASCII art, create a Python file that prints the ASCII and run it in Command Prompt or your local terminal.
 
 **Compatibility with anything other than Windows 10 Command Prompt is **not** guaranteed!**
 
 **Important:** The ASCII art must **only** use UTF-8 characters!
 
+It is unknown whether ANSI Color Codes work correctly on all machines.
+
 ### **Contributing ASCII Art to Examples**
 
 - Open a suggestion issue to add your ASCII art. You can also do this on the [Support Server](https://discord.gg/9EAGVZUt2Y).
 - Credit the original artist.
-- Provide a screenshot of your console displaying the ASCII.
-- If the art was generated using AI (Text2Image or Image2Image), explicitly state this.
-- You **do not** need to disclose AI tools like brush smoothing or line tools.
+- Provide a screenshot of your terminal displaying the ASCII using the **default** font and size configuration.
+- If the art was generated using AI (Text2Image, Image2Image, or similar), explicitly state this.
+- You **do not** need to disclose AI tools such as brush smoothing or line tools.
 - If your digital art could be mistaken for traditional, clarify that it is digital.
 
-Keep the width around **64 characters**. The less, the better.
+Keep the width around **64 characters** at most. The less, the better.
 
 ## Music
 
@@ -187,11 +191,11 @@ The music function is **buggy** and still in development.
 - If you send a playlist link, only the selected song will play. If you can fix this, contact me, and I'll credit your fix.
 - If the bot shows incorrect titles, lengths, or thumbnails, restart the bot. The queue is likely messed up. Avoid requesting multiple songs simultaneously.
 - The Playlist command may sometimes show incorrect songs or fail to update properly.
-- The skip command **should** work.
+- The skip command *should* work.
 
-This is a rudimentary solution after major bots removed YouTube playback for an immature reason. *(But hey, while you can’t play YouTube videos anymore, at least you can be a child predator on Discord without facing any problems! Some of the Discord Administrators even are those!)*
+This is a rudimentary solution after major bots removed YouTube playback for an immature reason. *(But hey, while you can’t play YouTube videos anymore, at least you can be a child predator on Discord without facing any problems! Some of the Discord Administrators will even join you on that adventure!)*
 
-- The bot **cannot** play age-restricted videos. There may be a way to bypass this, but I don’t know how.
+- The bot **cannot** play age-restricted videos. There may be a way to bypass this, but I don’t know how. You might be able to do this by having yt-dlp log in using your credentials, but I don't plan on adding this functionality by default.
 - **Country-restricted videos can be bypassed with a VPN.**
 - If you're running the bot on a server, use a VPN to bypass country restrictions.
 
@@ -202,7 +206,7 @@ This is a rudimentary solution after major bots removed YouTube playback for an 
 - ~~Use **FX File Explorer** on Android to manually clear it if necessary.~~ **FIXED IN VERSIONS >=2.3.26**
 - ~~Location in **FX File Explorer**: `Home > [Your NatsukiBot Installation Directory] > .\webm_downloads`.~~ **FIXED IN VERSIONS >=2.3.26**
 - As of **version >=2.3.26**, the folder is properly named `webm_downloads` on both **Windows** and **Termux**, and the auto-delete feature thus works correctly on both platforms. If you used versions **2.3.25 or earlier**, you might have to delete the old folder manually via `rm -d '.\webm_downloads'`.
-- Termux is a **lower priority** than Windows, with other OS support even lower. However, since I also use Termux, **compatibility is a top priority**. Expect nearly the same functionality as on PC.
+- ~~Termux is a **lower priority** than Windows, with other OS support even lower. However, since I also use Termux, **compatibility is a top priority**. Expect nearly the same functionality as on PC.~~ As of version 2.5.7, Termux is **top priority**, closely followed by **Linux** (Arch), and other Operating Systems behind them.
 
 ## Dev Notes
 

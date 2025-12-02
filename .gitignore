@@ -5,6 +5,7 @@ longterm_lists.json
 /.idea/
 /.vscode/
 /venv/
+/.venv/
 run.bat
 /webm_downloads/
 twitter_embedder_settings.json
