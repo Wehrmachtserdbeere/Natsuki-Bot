@@ -3,6 +3,7 @@ aiohttp
 asyncio
 bs4
 datetime
+davey
 defusedxml
 discord
 discord.py
