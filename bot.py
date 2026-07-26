@@ -1,12 +1,12 @@
 __author__ = "Strawberry Software"
-__copyright__ = "Copyright 2019-2025"
+__copyright__ = "Copyright 2019-2026"
 __credits__ = [
     "Strawberry",
     "Vim - An old Friend of Strawberry's",
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT"
-__version__ = "2.5.7"
+__version__ = "2.6.0"
 __maintainer__ = "Strawberry"
 __status__ = "Development"
 __support_discord__ = "https://discord.gg/9EAGVZUt2Y" # EDIT THIS
@@ -199,7 +199,7 @@ ytdl_format_options = {
     'source_address': '0.0.0.0',  # bind to ipv4 since ipv6 addresses cause issues sometimes
 }
 
-ytdl = yt_dlp.YoutubeDL(ytdl_format_options)
+ytdl = yt_dlp.YoutubeDL(ytdl_format_options) # type: ignore
 
 # Add bot version to the error logger
 class VersionLoggerAdapter(logging.LoggerAdapter):
@@ -1449,21 +1449,6 @@ async def doom(interaction: discord.Interaction):
         " there. Your body will decay and go back to the dust, and all that will remain of your legacy is a family that"
         " is unmistakably yours.")
 
-songs_list = []
-songs_title = []
-song_requester = []
-song_length = []
-song_urls = []
-song_img = []
-queue_v = ""
-source_title = ""
-playnow_requester = ""
-playnow_img = ""
-playnow_title = ""
-playnow_length = 0
-playnow_url = ""
-firstsong = True
-
 # IMPORTANT:
 #
 # If this bot starts acting up, examples
@@ -1485,341 +1470,369 @@ firstsong = True
 #
 # ~ Strawb ^-^
 
+# TODO: Instead of a single yt_playlist that is shared among Servers, make a "player_state" object.
+# Something like this:
+#
+# guild_queues = {
+#    guild_id: []
+#}
+#
+# guild_id here is the actual guild ID.
+
 class AloneInVoiceChatException(Exception): ...
 class NotInVoiceChatException(Exception): ...
+class NotValidURL(Exception): ...
+
+# This will be our playlist for Youtube.
+yt_playlist : list[dict] = []
 
 @client.tree.command(name="play")
 async def _play(interaction: discord.Interaction, url: str):
-    '''
-    Play a song (must have URL)
-    
-    url: A string of the URL to the song. Example: `https://www.youtube.com/watch?v=dQw4w9WgXcQ`
-    '''
+    """
+    Play a Youtube song or playlist.
+    """
     await interaction.response.defer()
     try:
-        # Make sure the User is in a voice channel
-        if interaction.user.voice == None:
+        # Is user in voice channel?
+        if interaction.user.voice is None:
             await interaction.edit_original_response(content = "You're not in a voice channel!")
             return
 
-        if not "?v=" in url:
-            await interaction.edit_original_response(content = "I cannot play playlists. Apologies :(")
-            return
-    
-        vc: discord.VoiceClient
-        vc = interaction.guild.voice_client
-
+        vc: discord.VoiceClient = interaction.guild.voice_client
+        # Is bot in voice channel? If not, connect to user's voice channel.
         if vc is None:
             await interaction.user.voice.channel.connect()
             vc = interaction.guild.voice_client
+        
+        # Send to handle URL and append to playlist.
+        # Error automatically is handled at the end of this command.
+        await handle_url(url)
 
-        print("DEBUG - Starting PLAY command!")
-        if not vc.is_playing():
-            print("DEBUG - Not playing.")
-            if not songs_list:
-                print("DEBUG - No playlist. Playing immediately...")
-                file = search(url)[1]
-
-                cur_songs_info = get_video_info(url)
-
-                embed = discord.Embed(
-                    title = "Natsukibot - Playlist",
-                    color = discord.Color.from_rgb(r = 255, g = 0, b = 200)
-                )
-                embed.set_thumbnail(url = cur_songs_info[2])
-                embed.add_field(
-                    name = f"Now playing:",
-                    value = f"[{cur_songs_info[0]}]({url})\nTotal Length: {timedelta(seconds = cur_songs_info[1])}"
-                )
-
-                # If bot is the only one in the voice channel, it will not play.
-                if vc.channel.members == 1:
-                    raise AloneInVoiceChatException
-                # If the bot is not in a voice channel, it will not play either.
-                if [ member.id for member in vc.channel.members ] == [ client.user.id ]:
-                    raise NotInVoiceChatException
-                
-                await interaction.edit_original_response(embed = embed)
-
-                playnow = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(file, executable='ffmpeg', **ffmpeg_options))
-
-                # In the case that the user disconnects while starting the play command, the bot will gracefully handle the exception.
-                try:
-                    NatsukiActivity.set_streaming_activity(activity_text_data)
-                    vc.play(playnow) # No "after" needed, we will handle the text setting elsewhere
-                except discord.errors.ClientException:
-                    # No error logging needed, this is graceful and needs no fixing, likely ever... things said before a fatal error xD
-                    NatsukiActivity.set_voice_activity(activity_text_data)
-                    await interaction.edit_original_response(content="Not connected to voice.")
-                
-                while vc.is_playing():
-                    await asyncio.sleep(0.5)
-                await play_next(interaction)
-            else:
-                embed = discord.Embed(
-                    title = "Natsukibot - Playlist",
-                    color = discord.Color.from_rgb(r = 255, g = 0, b = 200)
-                )
-                embed.add_field(
-                    name = "Added to playlist:",
-                    value = f"[{cur_songs_info[0]}]({url})\nTotal Length: {timedelta(seconds = cur_songs_info[1])}"
-                )
-                await interaction.edit_original_response(embed = embed)
-                add_to_playlist(songs_list, url)
-        else:
-            cur_songs_info = get_video_info(url)
-            embed = discord.Embed(
-                title = "Natsukibot - Playlist",
-                color = discord.Color.from_rgb(r = 255, g = 0, b = 200)
+        if vc.is_playing():
+            song = yt_playlist[-1]
+            embed : discord.Embed = discord.Embed(
+                title = "NatsukiBot - Playlist",
+                color = discord.Color.from_rgb(255, 0, 200)
             )
+            if song["thumbnail"]:
+                embed.set_thumbnail(url = song["thumbnail"])
             embed.add_field(
-                name = "Added to playlist:",
-                value = f"[{cur_songs_info[0]}]({url})\nTotal Length: {timedelta(seconds = cur_songs_info[1])}"
+                name = "Added to queue:",
+                value = f"[{song['title']}]({song['webpage_url']})\n"
+                    f"Length: [ {timedelta(seconds=song['duration'])} ]"
             )
             await interaction.edit_original_response(embed = embed)
-            add_to_playlist(songs_list, url)
+            return
+        else:
+            try:
+                await interaction.delete_original_response()
+            except Exception:
+                # We do not care. The message is either there, or it isn't. Any error mean it's already been deleted via reaction-delete, or the internet died.
+                # In both cases, not our problem :P
+                pass
+            await play_next(interaction)
+        
+
+    except NotValidURL:
+        await interaction.edit_original_response(content = "Error! You sent an invalid URL :(")
+    #except Exception as e:
+    #    print(e)
+    #    await interaction.edit_original_response(content = "Oops...")
 
 
 
-    #except discord.errors.HTTPException:
-    #    await interaction.edit_original_response(content = "File too large, try again.")
-    except PermissionError:
-        await interaction.edit_original_response(content = "Permission err- wait what? Yea... \"Permission Error\". Huh.")
-    except yt_dlp.DownloadError as e:
-        logger.error(f"[v{__version__}] || YT-DLP Download Error: {e}")
-        await interaction.edit_original_response(content = "Video unavailable. Most likely because this content is age-restricted or not available in the host country.\nComplain to YouTube about this, I cannot fix this.")
-    except AloneInVoiceChatException:
-        # No error logging needed.
-        await interaction.edit_original_response(content = "I'm alone in the voice channel. I'm not playing for myself.")
-    except NotInVoiceChatException as e:
-        # No error logging needed.
-        await interaction.edit_original_response(content = "I'm not in a voice channel. *Where* do you expect me to play anything?")
-    except OSError as e:
-        logger.error(f"[v{__version__}] || OSError: {e}")
-        await interaction.edit_original_response(content = "An error occoured, please try again.")
-
-def add_to_playlist(playlist: list, url: str):
-    playlist.append(url)
-
-def remove_from_playlist(playlist: list, entry: int):
-    try:
-        playlist.remove(entry)
-    except:
-        pass
-
-def get_video_info(url: str) -> tuple[str, int, bool]:
+async def play_next(interaction : discord.Interaction) -> None:
     """
-    Get information about the video linked
+    Handles playing. Invoking this will play the first entry of the playlist, then remove it, and continue until nothing is left.\n
+    Expects to have finished playing, or it will skip the currently playing song!
+    """
+    # Is the playlist already empty?
+    if not yt_playlist:
+        await interaction.channel.send(content = "Finished playing!")
+        NatsukiActivity.set_random_activity(activity_text_data)
+        return
+    
+    try:
+        vc: discord.VoiceClient
+        vc = interaction.guild.voice_client
+    except Exception:
+        await interaction.channel.send(content = "A critical error happened when getting the voice client! Quitting for safety!")
+        yt_playlist.clear()
+        return
 
-    Arguments:
-    @param url      URL to check
+    # Is bot alone in voice channel?
+    if len(vc.channel.members) == 1:
+        await interaction.channel.send(content = "I'm alone in the voice chat. Clearing the playlist and exiting. See you next time!")
+        yt_playlist.clear()
+        await vc.disconnect()
+        return
 
-    @param Touple Index 0: Video Title
-    @param Touple Index 1: Video Duration in Seconds
-    @param Touple Index 2: Thumbnail
+    song = yt_playlist[0]
+    # Remove the now loaded video from the playlist
+    yt_playlist.pop(0)
+    
+    # Prepare the embed
+    embed : discord.Embed = discord.Embed(
+        title = "NatsukiBot - Playlist",
+        color = discord.Color.from_rgb(255, 0, 200)
+    )
+    if song["thumbnail"]:
+        embed.set_thumbnail(url = song["thumbnail"])
+    embed.add_field(
+        name = "Now playing:",
+        value = f"[{song['title']}]({song['webpage_url']})\n"
+            f"Length: [ {timedelta(seconds=song['duration'])} ]"
+    )
+
+    await interaction.channel.send(embed = embed)
+
+    playnow = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(song['stream_url'], executable='ffmpeg', **ffmpeg_options))
+
+    # Add flavor
+    if not vc.is_playing():
+        NatsukiActivity.set_streaming_activity(activity_text_data)
+    
+    try:
+        vc.play(
+            playnow,
+            after=lambda error: after_song(error, interaction)
+        )
+    except:
+        await interaction.channel.send(content = "A critical error happened! Check my logs and ping whoever maintains this bot instance!")
+        return
+
+    pass
+
+def after_song(error, interaction):
+    if error:
+        logger.error(f"Audio playback error: {error}")
+
+    asyncio.run_coroutine_threadsafe(
+        play_next(interaction),
+        client.loop
+    )
+
+async def handle_url(url: str) -> None:
+
+    with yt_dlp.YoutubeDL(ytdl_format_options) as ydl:
+        info = ydl.extract_info(url, download=False)
+
+    entries = info.get("entries")
+
+    if entries:
+        # Playlist
+        for entry in entries:
+            if entry is None:
+                continue
+
+            yt_playlist.append({
+                "title": entry.get("title"),
+                "duration": entry.get("duration"),
+                "thumbnail": entry.get("thumbnail"),
+                "stream_url": entry.get("url"),
+                "webpage_url": entry.get("webpage_url")
+            })
+
+    elif info:
+        # Single video
+        yt_playlist.append({
+            "title": info.get("title"),
+            "duration": info.get("duration"),
+            "thumbnail": info.get("thumbnail"),
+            "stream_url": info.get("url"),
+            "webpage_url": info.get("webpage_url")
+        })
+
+    else:
+        raise NotValidURL()
+
+
+# TODO: Test!
+# UNTESTED
+class QueueView(discord.ui.View):
+    def __init__(self, interaction: discord.Interaction):
+        super().__init__(timeout=120)
+        self.interaction = interaction
+        self.page = 0
+        self.page_size = 10
+
+    def get_page_embed(self) -> discord.Embed:
+        embed = discord.Embed(
+            title="NatsukiBot - Playlist",
+            color=discord.Color.from_rgb(255, 0, 200)
+        )
+
+        if len(yt_playlist) == 0:
+            embed.add_field(
+                name="Queue",
+                value="The playlist is empty, add some songs!"
+            )
+            return embed
+
+        total_pages = math.ceil(len(yt_playlist) / self.page_size)
+
+        start = self.page * self.page_size
+        end = start + self.page_size
+
+        songs = yt_playlist[start:end]
+
+        message = ""
+
+        for index, song in enumerate(songs, start=start + 1):
+            message += (
+                f"{index} - "
+                f"[{song['title']}]({song['webpage_url']}) "
+                f"({timedelta(seconds=song['duration'])})\n"
+            )
+
+        embed.add_field(
+            name=f"Page {self.page + 1}/{total_pages}",
+            value=message
+        )
+
+        return embed
+
+    def update_buttons(self):
+        total_pages = math.ceil(len(yt_playlist) / self.page_size)
+
+        self.next_page.disabled = self.page >= total_pages - 1
+
+
+    @discord.ui.button(
+        label="Next Page",
+        style=discord.ButtonStyle.primary
+    )
+    async def next_page(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
+        self.page += 1
+        self.update_buttons()
+
+        await interaction.response.edit_message(
+            embed=self.get_page_embed(),
+            view=self
+        )
+
+
+
+@client.tree.command(name="queue")
+async def _queue(interaction: discord.Interaction):
+    await interaction.response.defer()
+
+    view = QueueView(interaction)
+    view.update_buttons()
+
+    await interaction.edit_original_response(
+        embed=view.get_page_embed(),
+        view=view
+    )
+            
+
+
+def get_video_info(url: str) -> tuple[str, int, str, str]:
+    """Get information about the video linked.
+
+    Args:
+        url: The URL of the video to check.
+
+    Returns:
+        tuple[str, int, str, str]: A tuple containing, in order:
+            - title (str): Video title.
+            - duration (int): Video duration in seconds.
+            - thumbnail (str): A link to the thumbnail.
+            - url (str): The URL to the stream.
     """
     with yt_dlp.YoutubeDL(ytdl_format_options) as ydl:
         info_dict = ydl.extract_info(url, download = False)
         title = info_dict.get("title", None)
         length = info_dict.get("duration", None) # Duration in seconds
         thumbnail = info_dict.get("thumbnail", None)
-        return title, length, thumbnail
-
-@client.tree.command(name="remove")
-async def remove(interaction: discord.Interaction, entry: int):
-    ''' Remove entry from Playlist. Entry starts at 0 for the first entry, 1 for the second, and so on! '''
-    await interaction.response.defer()
-
-    if entry == 0:
-        entry = 1
-        dev_checker = True
-
-    if songs_list.index(entry - 1):
-        songs_list.remove(entry - 1) # Make up that Python counts from 0. This way, if you want the 5th song gone, and type in "5", it correctly removed the fifth song, which is at Python position 4 (0, 1, 2, 3, 4).
-        if dev_checker:
-            await interaction.edit_original_response(content = "Removed! By the way, I saw you're a programmer (or mistyped), so do note that the playlist starts at 1, not at 0.")
-        else:
-            await interaction.edit_original_response(content = "Removed!")
-
-    elif songs_list.index(entry):
-        await interaction.edit_original_response(content = f"There is no song at spot {entry}.")
-    else:
-        await interaction.edit_original_response(content = f"Sorry, I didn't find anything at the {entry}. position. I didn't find any at {entry + 1} either.")
-
-@client.tree.command(name="playlist")
-async def playlist(interaction: discord.Interaction):
-    ''' Show the current playlist '''
-    await interaction.response.defer()
-    if not songs_list:
-        await interaction.edit_original_response(content = f"The playlist is empty.")
-    else:
-        embed = discord.Embed(
-            title = "Natsukibot - Playlist",
-            color = discord.Color.from_rgb(r = 255, g = 0, b = 200)
-        )
-
-        i = 0
-        for song in songs_list:
-            if i < 10:
-                
-                cur_songs_info = get_video_info(song)
-
-                embed.add_field(
-                    name = f"{i + 1}. {cur_songs_info[0]}", # Title
-                    value = f"[Link]({song})\nLength: {timedelta(seconds = cur_songs_info[1])}", # Link
-                    inline  = False
-                )
-                i += 1
-            else:
-                pass
-        embed.set_footer(text = f"Running on Germany's best internet at {(client.latency * 100):.3f}ms ping!")
-        await interaction.edit_original_response(embed = embed)
+        url = info_dict.get("url", None)
+        return title, length, thumbnail, url
 
 
 
 @client.tree.command(name="stop")
-async def stop(interaction : discord.Interaction):
-    ''' Stop playing and clear the playlist '''
+async def stop(interaction: discord.Interaction):
+    """Stop playing and clear the playlist."""
     await interaction.response.defer()
-    voice: discord.VoiceClient
-    voice = interaction.guild.voice_client
-    if voice != None:
-        await interaction.edit_original_response(content = "Cleared!")
-        voice.stop()
-        songs_list.clear()
-    else:
-        await interaction.edit_original_response(content = "I'm not connected to anything, dummy!")
+
+    vc = interaction.guild.voice_client
+
+    if vc is None:
+        await interaction.edit_original_response(
+            content="I'm not connected to anything, dummy!"
+        )
+        return
+
+    yt_playlist.clear()
+    vc.stop()
+
+    await interaction.edit_original_response(
+        content="Cleared!"
+    )
+
 
 @client.tree.command(name="disconnect")
 async def _disconnect(interaction: discord.Interaction):
-    ''' Disconnect from current VC '''
+    """Disconnect from the current voice channel."""
     await interaction.response.defer()
-    vc: discord.VoiceClient
+
     vc = interaction.guild.voice_client
-    if vc != None:
-        await vc.disconnect(force=True)
-        if interaction.guild.voice_client == None:
-            await interaction.edit_original_response(content = "Disconnected. See you next time! :D")
-        else:
-            await interaction.edit_original_response(content = "Something unexpected happened, please disconnect me manually =)")
+
+    if vc is None:
+        await interaction.edit_original_response(
+            content="I'm not in a voice channel, dummy :P"
+        )
+        return
+
+    yt_playlist.clear()
+    await vc.disconnect(force=True)
+
+    if interaction.guild.voice_client is None:
+        await interaction.edit_original_response(
+            content="Disconnected. See you next time! :D"
+        )
     else:
-        await interaction.edit_original_response(content = "I'm not in a voice channel, dummy :P")
-
-
-
-#@client.tree.command(name="right_now")
-#async def right_now(interaction : discord.Interaction):
-#    ''' See the currently playing song '''
-#    await interaction.response.defer()
-#    if interaction.guild.voice_client.is_playing() and playnow_title and playnow_requester and playnow_img:
-#        embed = discord.Embed(color=0xff00cc)
-#        embed.add_field(name="Playing:", value=f"`{playnow_title}` - Requested by `{playnow_requester}`")
-#        embed.set_thumbnail(url=playnow_img)
-#
-#
-#        await interaction.edit_original_response(embed=embed)
-#    else:
-#        await interaction.edit_original_response(content="I'm not playing anything right now, dummy!")
-
-
-
-is_playing = False
-skipped = False
-
-async def play_next(interaction : discord.Interaction):
-    try:
-        vc: discord.VoiceClient
-        vc = interaction.guild.voice_client
-        if songs_list:
-            if vc.is_playing():
-                vc.stop()
-            playnow = songs_list[0]
-            file = search(playnow)[1]
-
-            cur_songs_info = get_video_info(playnow)
-
-            embed = discord.Embed(
-                title = "Natsukibot - Playlist",
-                color = discord.Color.from_rgb(r = 255, g = 0, b = 200)
-            )
-            embed.set_thumbnail(url = cur_songs_info[2])
-            embed.add_field(
-                name = f"Now playing:",
-                value = f"[{cur_songs_info[0]}]({playnow})\nTotal Length: {timedelta(seconds = cur_songs_info[1])}"
-            )
-
-            # If bot is the only one in the voice channel, it will not play.
-            if vc.channel.members == 1:
-                raise AloneInVoiceChatException
-            # If the bot is not in a voice channel, it will not play either.
-            if [ member.id for member in vc.channel.members ] == [ client.user.id ]:
-                raise NotInVoiceChatException
-
-            await interaction.channel.send(embed = embed)
-
-            remove_from_playlist(songs_list, songs_list[0])
-            playnow = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(file, executable='ffmpeg', **ffmpeg_options))
-
-            # In the case that the user disconnects while starting the play command, the bot will gracefully handle the exception.
-            try:
-                vc.play(playnow)
-                if not is_playing:
-                    NatsukiActivity.set_streaming_activity(activity_text_data)
-            except discord.errors.ClientException:
-                # No error log needed.
-                await interaction.edit_original_response(content="Not connected to voice.")
-                return
-
-            while vc.is_playing():
-                await asyncio.sleep(0.5)
-            await play_next(interaction)
-        else:
-            await interaction.channel.send(content = "Finished playing.")
-            NatsukiActivity.set_voice_activity(activity_text_data)
-
-    except discord.errors.HTTPException:
-        await interaction.channel.send(content = "File too large, try again.")
-    except PermissionError as e:
-        logger.error(f"[v{__version__}] || Permission Error: {e}")
-        await interaction.channel.send(content = "Permission error... Weird.")
-    except yt_dlp.DownloadError as e:
-        logger.error(f"[v{__version__}] || YT-DLP Download Error: {e}")
-        await interaction.channel.send(content = "Video unavailable. Most likely because this content is age-restricted or not available in the host country.\nComplain to YouTube about this, I cannot fix this.")
-    except AloneInVoiceChatException:
-        await interaction.channel.send(content = "I'm alone in the voice channel. I'm not playing for myself.")
-    except NotInVoiceChatException:
-        await interaction.channel.send(content = "I'm not in a voice channel. *Where* do you expect me to play anything?")
-    except OSError as e:
-        logger.error(f"[v{__version__}] || OSError: {e}")
-        await interaction.channel.send(content = "An error occoured, please try again.")
-
-
-
-@client.tree.command(name="debugplay")
-async def debugplay(interaction : discord.Interaction):
-    await interaction.response.defer()
-
-    await interaction.edit_original_response(content=
-        f"|| DEBUG || - songs_list: {songs_list} \n" +
-        f"|| DEBUG || - songs_title: {songs_title} \n" +
-        f""
-    )
-        
+        await interaction.edit_original_response(
+            content="Something unexpected happened, please disconnect me manually =)"
+        )
 
 
 @client.tree.command(name="skip")
-async def skip(interaction : discord.Interaction):
-    ''' Skip the currently playing song '''
+async def skip(interaction: discord.Interaction):
+    """Skip the currently playing song."""
     await interaction.response.defer()
+
     try:
-        vc: discord.VoiceClient
         vc = interaction.guild.voice_client
-        if vc.is_playing():
-            vc.stop()
-            NatsukiActivity.set_voice_activity(activity_text_data)
+
+        if vc is None:
+            await interaction.edit_original_response(
+                content="I'm not connected to a voice channel!"
+            )
+            return
+
+        if not vc.is_playing():
+            await interaction.edit_original_response(
+                content="Nothing is currently playing!"
+            )
+            return
+
+        vc.stop()
+
+        await interaction.edit_original_response(
+            content="Skipped!"
+        )
+
     except Exception as e:
         logger.error(f"[v{__version__}] || Unknown Exception: {e}")
-        await interaction.followup.send(content = "Error! Something happened!\n" + str(e))
+
+        await interaction.edit_original_response(
+            content=f"Error! Something happened!\n{e}"
+        )
 
 
 
