@@ -18,7 +18,7 @@ Table of Content
   - [Images and ASCII Art](#images-and-ascii-art)
     - [**Contributing ASCII Art to Examples**](#contributing-ascii-art-to-examples)
   - [Music](#music)
-    - [**Playlists do not work!**](#playlists-do-not-work)
+    - [**Playlists do work!**](#playlists-do-work)
   - [Termux Notes](#termux-notes)
   - [Dev Notes](#dev-notes)
 
@@ -70,6 +70,8 @@ Table of Content
 
 That's all for this file. It may be replaced with an optional globally shared blacklist one day.
 
+<hr/>
+
 #### `twitter_embedder_settings.json`
 
 This file will be automatically created after running the bot once. Add the Server IDs as integers to the corresponding fields. Example:
@@ -88,6 +90,8 @@ This file will be automatically created after running the bot once. Add the Serv
 Sites **must** be HTTP**S**!
 
 If a Server is not in the list, it defaults to the first entry in the file. In the above example, it would default to `vxtwitter.com`.
+
+<hr/>
 
 #### `.env`
 
@@ -124,6 +128,18 @@ GIST_ID=theIDyouGETwhenYOUcreateAgist
 ```
 
 **MAKE SURE YOU ADD `.env` TO YOUR `.gitignore` FILE!**
+
+<hr/>
+
+#### `settings.py`
+
+**FIRST:** <br/>
+Use your file explorer or terminal, duplicate/clone/copy-paste `settings.example.py` and rename the resulting copy to `settings.py`
+
+**THEN:** <br/>
+Open your `settings.py` file in a text editor of your choice. All information will be provided to you inside this file.
+
+**Add `settings.py` to your `.gitignore` file.**
 
 ## Edit the Bot
 
@@ -184,13 +200,13 @@ Keep the width around **64 characters** at most. The less, the better.
 
 ## Music
 
-The music function is **buggy** and still in development.
+The music function is still in development.
 
-### **Playlists do not work!**
+### **Playlists do work!**
 
-- If you send a playlist link, only the selected song will play. If you can fix this, contact me, and I'll credit your fix.
-- If the bot shows incorrect titles, lengths, or thumbnails, restart the bot. The queue is likely messed up. Avoid requesting multiple songs simultaneously.
-- The Playlist command may sometimes show incorrect songs or fail to update properly.
+- ~~If you send a playlist link, only the selected song will play. If you can fix this, contact me, and I'll credit your fix.~~ | Fixed as of 2.6.0
+- ~~If the bot shows incorrect titles, lengths, or thumbnails, restart the bot. The queue is likely messed up. Avoid requesting multiple songs simultaneously.~~ | Should be fixed as of 2.6.0
+- ~~The Playlist command may sometimes show incorrect songs or fail to update properly.~~ | Fixed as of 2.6.0
 - The skip command *should* work.
 
 This is a rudimentary solution after major bots removed YouTube playback for an immature reason. *(But hey, while you can’t play YouTube videos anymore, at least you can be a child predator on Discord without facing any problems! Some of the Discord Administrators will even join you on that adventure!)*
@@ -201,17 +217,17 @@ This is a rudimentary solution after major bots removed YouTube playback for an 
 
 ## Termux Notes
 
-~~- Because Termux uses a different file system, the `webm_downloads` folder will be named `.\webm_downloads`. This will be hidden by default.~~ **FIXED IN VERSIONS >=2.3.26**
+~~- Because Termux uses a different file system, the `webm_downloads` folder will be named `.\webm_downloads`. This will be hidden by default.~~ | **FIXED IN VERSIONS >=2.3.26**
 
-- ~~Use **FX File Explorer** on Android to manually clear it if necessary.~~ **FIXED IN VERSIONS >=2.3.26**
-- ~~Location in **FX File Explorer**: `Home > [Your NatsukiBot Installation Directory] > .\webm_downloads`.~~ **FIXED IN VERSIONS >=2.3.26**
+- ~~Use **FX File Explorer** on Android to manually clear it if necessary.~~ | **FIXED IN VERSIONS >=2.3.26**
+- ~~Location in **FX File Explorer**: `Home > [Your NatsukiBot Installation Directory] > .\webm_downloads`.~~ | **FIXED IN VERSIONS >=2.3.26**
 - As of **version >=2.3.26**, the folder is properly named `webm_downloads` on both **Windows** and **Termux**, and the auto-delete feature thus works correctly on both platforms. If you used versions **2.3.25 or earlier**, you might have to delete the old folder manually via `rm -d '.\webm_downloads'`.
-- ~~Termux is a **lower priority** than Windows, with other OS support even lower. However, since I also use Termux, **compatibility is a top priority**. Expect nearly the same functionality as on PC.~~ As of version 2.5.7, Termux is **top priority**, closely followed by **Linux** (Arch), and other Operating Systems behind them.
+- ~~Termux is a **lower priority** than Windows, with other OS support even lower. However, since I also use Termux, **compatibility is a top priority**. Expect nearly the same functionality as on PC.~~ | As of version 2.5.7, Termux is **top priority**, closely followed by **Windows** (11). **Linux** will be checked very occasionally.
 
 ## Dev Notes
 
 This isn't part of the "documentation," just wanted to say **thank you** for using the bot!
 
-I've worked on this for years (since **2018**!), and while the music system aged me like 20 years through sheer suffering, it's still fun!
+I've worked on this for years (since **2018** !), and while the music system aged me like 20 years through sheer suffering, it's still fun!
 
 Enjoy the bot! **\^-\^**

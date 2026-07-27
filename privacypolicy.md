@@ -1,10 +1,10 @@
-# **Privacy Policy for Natsuki Bot**
+# **Privacy Policy for NatsukiBot**
 
-_Last Updated: April 2nd, 2025_  
+_Last Updated: July 27th, 2026_  
 
 ## **1. Introduction**  
 
-This Privacy Policy explains what information Natsuki Bot collects, why we collect it, and how we use and protect it. By using Natsuki Bot, you agree to the data practices described below.  
+This Privacy Policy explains what information NatsukiBot collects, why we collect it, and how we use and protect it. By using NatsukiBot, you agree to the data practices described below.  
 
 ## **2. Data Controller**  
 
@@ -13,17 +13,17 @@ This Privacy Policy explains what information Natsuki Bot collects, why we colle
 
 ## **3. Data Collection**  
 
-Natsuki Bot collects and processes the following data:  
+NatsukiBot collects and processes the following data:  
 - **User IDs** (for bot functionality)  
   - User IDs are public on Discord and used by all bots for user identification.  
   - User IDs of users who have been blacklisted from using the bot will be stored privately.  
 - **Messages and Command Inputs** (processed temporarily for bot responses; not stored)  
 - **Server Names** (for bot functionality)  
-- **Publicly posted WEBM Videos** (private WEBM videos are not collected or processed)  
+- **Publicly posted WEBM Videos** (private WEBM videos, meaning WEBM videos uploaded in channels the bot is not present in, are not collected or processed)  
 
 ## **4. Legal Basis for Data Processing**  
 
-We process your data based on the necessity of data processing for the performance of Natsuki Bot’s functions under legitimate interest and contract-based necessity.  
+We process your data based on the necessity of data processing for the performance of NatsukiBot’s functions under legitimate interest and contract-based necessity.  
 
 ## **5. Purpose of Data Processing**  
 
@@ -34,11 +34,11 @@ We collect and process data for the following purposes:
 
 ## **6. Data Sharing**  
 
-We do not share your data with third parties. However, as Natsuki Bot operates on Discord, any data processed by the bot may also be subject to Discord’s data policies. Please refer to [Discord’s Privacy Policy](https://discord.com/privacy) for more details.  
+We do not share your data with third parties. However, as NatsukiBot operates on Discord, any data processed by the bot may also be subject to Discord’s data policies. Please refer to [Discord’s Privacy Policy](https://discord.com/privacy) for more details.  
 
 ## **7. International Data Transfers**  
 
-As Natsuki Bot operates on Discord, data may be processed outside the European Economic Area (EEA) under Discord’s infrastructure. Any data transfers are subject to Discord Inc.'s security measures and compliance policies.  
+As NatsukiBot operates on Discord, data may be processed outside the European Economic Area (EEA) under Discord’s infrastructure. Any data transfers are subject to Discord Inc.'s security measures and compliance policies.  
 
 ## **8. User Rights**  
 
@@ -60,11 +60,11 @@ We retain necessary data for as long as required for bot functionality and compl
 
 ## **10. Security Measures**  
 
-We implement appropriate measures to protect user data from unauthorized access or misuse. As Natsuki Bot operates within Discord, security measures are also subject to Discord’s platform protections.  
+We implement appropriate measures to protect user data from unauthorized access or misuse. As NatsukiBot operates within Discord, security measures are also subject to Discord’s platform protections.  
 
 ## **11. Cookies and Tracking**  
 
-Natsuki Bot does not use cookies or tracking technologies. However, Discord may collect usage data under its own policies. Please refer to Discord’s privacy policy for further details.  
+NatsukiBot does not use cookies or tracking technologies. However, Discord may collect usage data under its own policies. Please refer to Discord’s privacy policy for further details.  
 
 ## **12. Contact Information**  
 
@@ -74,4 +74,4 @@ For any privacy-related inquiries, please contact us via our [Support Server](ht
 
 We may update this Privacy Policy periodically. Any significant changes will be announced in our [Support Server](https://discord.gg/9EAGVZUt2Y).  
 
-Thank you for using Natsuki Bot!  
+Thank you for using NatsukiBot!  

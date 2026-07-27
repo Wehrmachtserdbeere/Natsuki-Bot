@@ -10,3 +10,4 @@ run.bat
 /webm_downloads/
 twitter_embedder_settings.json
 /logs/
+settings.py

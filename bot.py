@@ -1,3 +1,5 @@
+__title__ = "NatsukiBot"
+__description__ = "A general purpose Discord bot centered around Natsuki from Doki Doki Literature Club."
 __author__ = "Strawberry Software"
 __copyright__ = "Copyright 2019-2026"
 __credits__ = [
@@ -6,9 +8,11 @@ __credits__ = [
     "italy2003 (https://www.pixiv.net/en/users/66835722)"
     ]
 __license__ = "MIT"
-__version__ = "2.6.0"
+__version__ = "2.6.1"
+__version_info__ = tuple(int(x) for x in __version__.split("."))
 __maintainer__ = "Strawberry"
 __status__ = "Development"
+__repository__ = "https://github.com/Wehrmachtserdbeere/Natsuki-Bot"
 __support_discord__ = "https://discord.gg/9EAGVZUt2Y" # EDIT THIS
 __invite_link__ = "https://discord.com/api/oauth2/authorize?client_id=883082974252384277&permissions=8&scope=bot" # EDIT THIS
 
@@ -19,6 +23,7 @@ __invite_link__ = "https://discord.com/api/oauth2/authorize?client_id=8830829742
 #
 
 import asyncio
+from collections import defaultdict
 import json
 import math
 import time
@@ -191,12 +196,19 @@ ytdl_format_options = {
     'restrictfilenames': True,
     'noplaylist': True,
     'nocheckcertificate': True,
-    'ignoreerrors': False,
+    'ignoreerrors': True, # 27-Jul-26 - While remaking the play command, this was set from "False" to "True".
     'logtostderr': False,
     'quiet': True,
     'no_warnings': True,
     'default_search': 'auto',
     'source_address': '0.0.0.0',  # bind to ipv4 since ipv6 addresses cause issues sometimes
+    "socket_timeout": 10,
+    # Following added to avoid HTTPError 400 in some cases.
+    "extractor_args": {
+        "youtube": {
+            "player_client": ["android"]
+        }
+    },
 }
 
 ytdl = yt_dlp.YoutubeDL(ytdl_format_options) # type: ignore
@@ -1470,6 +1482,7 @@ async def doom(interaction: discord.Interaction):
 #
 # ~ Strawb ^-^
 
+
 # TODO: Instead of a single yt_playlist that is shared among Servers, make a "player_state" object.
 # Something like this:
 #
@@ -1478,66 +1491,107 @@ async def doom(interaction: discord.Interaction):
 #}
 #
 # guild_id here is the actual guild ID.
+# ^^^ Done! ^^^
 
 class AloneInVoiceChatException(Exception): ...
 class NotInVoiceChatException(Exception): ...
 class NotValidURL(Exception): ...
+class UnavailableVideoError(Exception): ...
 
 # This will be our playlist for Youtube.
-yt_playlist : list[dict] = []
+guild_queues = defaultdict(list)
 
 @client.tree.command(name="play")
 async def _play(interaction: discord.Interaction, url: str):
     """
     Play a Youtube song or playlist.
     """
+    queue = get_queue_from_interaction(interaction)
     await interaction.response.defer()
+
     try:
         # Is user in voice channel?
         if interaction.user.voice is None:
-            await interaction.edit_original_response(content = "You're not in a voice channel!")
+            await interaction.edit_original_response(
+                content="You're not in a voice channel!"
+            )
             return
 
         vc: discord.VoiceClient = interaction.guild.voice_client
+
         # Is bot in voice channel? If not, connect to user's voice channel.
         if vc is None:
             await interaction.user.voice.channel.connect()
             vc = interaction.guild.voice_client
-        
-        # Send to handle URL and append to playlist.
-        # Error automatically is handled at the end of this command.
-        await handle_url(url)
 
-        if vc.is_playing():
-            song = yt_playlist[-1]
-            embed : discord.Embed = discord.Embed(
-                title = "NatsukiBot - Playlist",
-                color = discord.Color.from_rgb(255, 0, 200)
+        was_playing = vc.is_playing()
+
+        # Add songs to queue
+        added_songs, is_playlist = await handle_url(url, queue)
+
+        # Playlist added: always show paginator
+        if is_playlist:
+            view = AddedPlaylistView(
+                added_songs,
+                len(queue) - len(added_songs)
             )
+
+            await interaction.edit_original_response(
+                embed=view.get_embed(),
+                view=view
+            )
+
+        # Single song added while already playing
+        elif was_playing:
+            song = added_songs[0]
+
+            embed = discord.Embed(
+                title="NatsukiBot - Playlist",
+                color=discord.Color.from_rgb(255, 0, 200)
+            )
+
             if song["thumbnail"]:
-                embed.set_thumbnail(url = song["thumbnail"])
+                embed.set_thumbnail(url=song["thumbnail"])
+
             embed.add_field(
-                name = "Added to queue:",
-                value = f"[{song['title']}]({song['webpage_url']})\n"
+                name="Added to queue:",
+                value=(
+                    f"[{song['title']}]({song['webpage_url']})\n"
                     f"Length: [ {timedelta(seconds=song['duration'])} ]"
+                )
             )
-            await interaction.edit_original_response(embed = embed)
-            return
+
+            await interaction.edit_original_response(embed=embed)
+
+        # Single song, nothing playing
         else:
-            try:
-                await interaction.delete_original_response()
-            except Exception:
-                # We do not care. The message is either there, or it isn't. Any error mean it's already been deleted via reaction-delete, or the internet died.
-                # In both cases, not our problem :P
-                pass
+            await interaction.delete_original_response()
+
+        # Start playback if needed
+        if not was_playing:
             await play_next(interaction)
-        
 
     except NotValidURL:
-        await interaction.edit_original_response(content = "Error! You sent an invalid URL :(")
+        await interaction.edit_original_response(
+            content="Error! You sent an invalid URL :("
+        )
+
+    except UnavailableVideoError:
+        await interaction.edit_original_response(
+            content="The video you tried to play is unavailable :("
+        )
+    
+    except yt_dlp.DownloadError as e:
+        logger.error(e)
+        await interaction.edit_original_response(
+            content="YouTube failed to provide this video/playlist."
+        )
+
     #except Exception as e:
-    #    print(e)
-    #    await interaction.edit_original_response(content = "Oops...")
+    #    logger.error(f"Play command error: {e}")
+    #    await interaction.edit_original_response(
+    #        content="Oops... Something went wrong."
+    #    )
 
 
 
@@ -1546,8 +1600,9 @@ async def play_next(interaction : discord.Interaction) -> None:
     Handles playing. Invoking this will play the first entry of the playlist, then remove it, and continue until nothing is left.\n
     Expects to have finished playing, or it will skip the currently playing song!
     """
+    queue = get_queue_from_interaction(interaction)
     # Is the playlist already empty?
-    if not yt_playlist:
+    if not queue:
         await interaction.channel.send(content = "Finished playing!")
         NatsukiActivity.set_random_activity(activity_text_data)
         return
@@ -1557,19 +1612,36 @@ async def play_next(interaction : discord.Interaction) -> None:
         vc = interaction.guild.voice_client
     except Exception:
         await interaction.channel.send(content = "A critical error happened when getting the voice client! Quitting for safety!")
-        yt_playlist.clear()
+        queue.clear()
         return
 
     # Is bot alone in voice channel?
     if len(vc.channel.members) == 1:
         await interaction.channel.send(content = "I'm alone in the voice chat. Clearing the playlist and exiting. See you next time!")
-        yt_playlist.clear()
+        queue.clear()
         await vc.disconnect()
         return
 
-    song = yt_playlist[0]
-    # Remove the now loaded video from the playlist
-    yt_playlist.pop(0)
+    song = queue[0]
+
+    if song["stream_url"] is None:
+        with yt_dlp.YoutubeDL(ytdl_format_options) as ydl:
+            info = ydl.extract_info(
+                song["webpage_url"],
+                download=False
+            )
+
+        song["stream_url"] = info["url"]
+
+        # Fill missing metadata
+        if song["thumbnail"] is None:
+            song["thumbnail"] = info.get("thumbnail")
+
+        if song["duration"] == 0:
+            song["duration"] = info.get("duration", 0)
+
+        if song["title"] is None:
+            song["title"] = info.get("title")
     
     # Prepare the embed
     embed : discord.Embed = discord.Embed(
@@ -1586,7 +1658,13 @@ async def play_next(interaction : discord.Interaction) -> None:
 
     await interaction.channel.send(embed = embed)
 
-    playnow = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(song['stream_url'], executable='ffmpeg', **ffmpeg_options))
+    playnow = discord.PCMVolumeTransformer(
+        discord.FFmpegPCMAudio(
+            song["stream_url"],
+            executable="ffmpeg",
+            **ffmpeg_options
+        )
+    )
 
     # Add flavor
     if not vc.is_playing():
@@ -1597,6 +1675,8 @@ async def play_next(interaction : discord.Interaction) -> None:
             playnow,
             after=lambda error: after_song(error, interaction)
         )
+        # Remove the now loaded video from the playlist
+        queue.pop(0)
     except:
         await interaction.channel.send(content = "A critical error happened! Check my logs and ping whoever maintains this bot instance!")
         return
@@ -1612,90 +1692,162 @@ def after_song(error, interaction):
         client.loop
     )
 
-async def handle_url(url: str) -> None:
+def get_queue_from_interaction(interaction: discord.Interaction) -> list[dict]:
+    """
+    Returns the interaction's guild's queue. If none exists, creates an empty one to use.
+    """
+    return guild_queues[interaction.guild.id]
 
-    with yt_dlp.YoutubeDL(ytdl_format_options) as ydl:
+def get_queue_from_id(guild_id : int) -> list[dict]:
+    """
+    Returns the entered guild's queue. If none exists, creates an empty one to use.
+    """
+    return guild_queues[guild_id]
+
+async def handle_url(url: str, queue: list[dict]) -> tuple[list[dict], bool]:
+    """
+    Processes a YouTube URL and appends video(s) to the queue.
+    """
+
+    added_songs = []
+
+    with yt_dlp.YoutubeDL({
+        **ytdl_format_options,
+        "ignoreerrors": True,
+        "extract_flat": "in_playlist"
+    }) as ydl:
         info = ydl.extract_info(url, download=False)
+
+    if info is None:
+        raise NotValidURL()
 
     entries = info.get("entries")
 
-    if entries:
-        # Playlist
+    if entries is not None:
         for entry in entries:
             if entry is None:
                 continue
 
-            yt_playlist.append({
+            song_url = entry.get("url")
+
+            if song_url is None:
+                continue
+
+            song = {
                 "title": entry.get("title"),
-                "duration": entry.get("duration"),
+                "duration": entry.get("duration") or 0,
                 "thumbnail": entry.get("thumbnail"),
-                "stream_url": entry.get("url"),
-                "webpage_url": entry.get("webpage_url")
-            })
+                "stream_url": None,   # Get later
+                "webpage_url": entry.get("webpage_url") or song_url
+            }
+
+            queue.append(song)
+            added_songs.append(song)
+
+        if not added_songs:
+            raise UnavailableVideoError()
+
+        return added_songs, True
+
 
     elif info:
-        # Single video
-        yt_playlist.append({
+        song = {
             "title": info.get("title"),
-            "duration": info.get("duration"),
+            "duration": info.get("duration") or 0,
             "thumbnail": info.get("thumbnail"),
             "stream_url": info.get("url"),
             "webpage_url": info.get("webpage_url")
-        })
+        }
 
-    else:
-        raise NotValidURL()
+        queue.append(song)
+        added_songs.append(song)
+
+        return added_songs, False
+
+
+    raise NotValidURL()
 
 
 # TODO: Test!
 # UNTESTED
 class QueueView(discord.ui.View):
-    def __init__(self, interaction: discord.Interaction):
+    def __init__(self, guild_id: int):
         super().__init__(timeout=120)
-        self.interaction = interaction
+        self.guild_id = guild_id
         self.page = 0
-        self.page_size = 10
+        self.pages = self.generate_pages()
 
-    def get_page_embed(self) -> discord.Embed:
+        self.update_buttons()
+
+    def generate_pages(self):
+        queue = get_queue_from_id(self.guild_id)
+
+        pages = []
+        current_page = []
+        length = 0
+
+        for index, song in enumerate(queue, start=1):
+            line = (
+                f"{index} - [{song['title'][:80]}]({song['webpage_url']}) "
+                f"({timedelta(seconds=song['duration'])})\n"
+            )
+
+            if length + len(line) > 1024:
+                pages.append(current_page)
+                current_page = []
+                length = 0
+
+            current_page.append((index, song))
+            length += len(line)
+
+        if current_page:
+            pages.append(current_page)
+
+        return pages
+
+    def update_buttons(self):
+        self.previous.disabled = self.page == 0
+        self.next_page.disabled = self.page >= len(self.pages) - 1
+
+    def get_page_embed(self):
         embed = discord.Embed(
             title="NatsukiBot - Playlist",
             color=discord.Color.from_rgb(255, 0, 200)
         )
 
-        if len(yt_playlist) == 0:
-            embed.add_field(
-                name="Queue",
-                value="The playlist is empty, add some songs!"
-            )
-            return embed
+        lines = []
 
-        total_pages = math.ceil(len(yt_playlist) / self.page_size)
-
-        start = self.page * self.page_size
-        end = start + self.page_size
-
-        songs = yt_playlist[start:end]
-
-        message = ""
-
-        for index, song in enumerate(songs, start=start + 1):
-            message += (
-                f"{index} - "
-                f"[{song['title']}]({song['webpage_url']}) "
-                f"({timedelta(seconds=song['duration'])})\n"
+        for index, song in self.pages[self.page]:
+            lines.append(
+                f"{index} - [{song['title'][:80]}]({song['webpage_url']}) "
+                f"({timedelta(seconds=song['duration'])})"
             )
 
         embed.add_field(
-            name=f"Page {self.page + 1}/{total_pages}",
-            value=message
+            name=f"Page {self.page + 1}/{len(self.pages)}",
+            value="\n".join(lines)
         )
 
         return embed
 
-    def update_buttons(self):
-        total_pages = math.ceil(len(yt_playlist) / self.page_size)
+    @discord.ui.button(
+        label="Previous",
+        style=discord.ButtonStyle.primary
+    )
+    async def previous(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
+        if self.page > 0:
+            self.page -= 1
 
-        self.next_page.disabled = self.page >= total_pages - 1
+        self.update_buttons()
+
+        await interaction.response.edit_message(
+            embed=self.get_page_embed(),
+            view=self
+        )
 
 
     @discord.ui.button(
@@ -1707,7 +1859,9 @@ class QueueView(discord.ui.View):
         interaction: discord.Interaction,
         button: discord.ui.Button
     ):
-        self.page += 1
+        if self.page < len(self.pages) - 1:
+            self.page += 1
+
         self.update_buttons()
 
         await interaction.response.edit_message(
@@ -1716,12 +1870,130 @@ class QueueView(discord.ui.View):
         )
 
 
+class AddedPlaylistView(discord.ui.View):
+    def __init__(self, songs: list[dict], queue_offset: int):
+        super().__init__(timeout=60)
+
+        self.songs = songs
+        self.queue_offset = queue_offset
+        self.page = 0
+
+        self.pages = self.create_pages()
+
+        self.update_buttons()
+
+
+    def create_pages(self) -> list[list[dict]]:
+        pages = []
+        current_page = []
+        current_length = 0
+
+        for song in self.songs:
+            index = self.queue_offset + len(
+                sum(pages, []) 
+            ) + len(current_page) + 1
+
+            line = (
+                f"{index} - [{song['title'][:80]}]({song['webpage_url']})\n"
+                f"Length: {timedelta(seconds=song['duration'])}\n"
+            )
+
+            # Discord field limit
+            if current_page and current_length + len(line) > 1024:
+                pages.append(current_page)
+                current_page = []
+                current_length = 0
+
+            current_page.append(song)
+            current_length += len(line)
+
+        if current_page:
+            pages.append(current_page)
+
+        return pages
+
+
+    def get_embed(self) -> discord.Embed:
+        embed = discord.Embed(
+            title="NatsukiBot - Added Playlist",
+            color=discord.Color.from_rgb(255, 0, 200)
+        )
+
+        songs = self.pages[self.page]
+
+        lines = []
+
+        start_index = self.queue_offset + sum(
+            len(page) for page in self.pages[:self.page]
+        ) + 1
+
+        for index, song in enumerate(songs, start=start_index):
+            lines.append(
+                f"{index} - [{song['title'][:80]}]({song['webpage_url']})\n"
+                f"Length: {timedelta(seconds=song['duration'])}"
+            )
+
+        embed.add_field(
+            name=f"Songs {start_index}-{start_index + len(songs) - 1}",
+            value="\n".join(lines)
+        )
+
+        embed.set_footer(
+            text=f"Page {self.page + 1}/{len(self.pages)}"
+        )
+
+        return embed
+
+
+    def update_buttons(self):
+        self.previous.disabled = self.page == 0
+        self.next.disabled = self.page >= len(self.pages) - 1
+
+
+    @discord.ui.button(
+        label="Previous",
+        style=discord.ButtonStyle.gray
+    )
+    async def previous(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
+        if self.page > 0:
+            self.page -= 1
+
+        self.update_buttons()
+
+        await interaction.response.edit_message(
+            embed=self.get_embed(),
+            view=self
+        )
+
+
+    @discord.ui.button(
+        label="Next",
+        style=discord.ButtonStyle.gray
+    )
+    async def next(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
+        if self.page < len(self.pages) - 1:
+            self.page += 1
+
+        self.update_buttons()
+
+        await interaction.response.edit_message(
+            embed=self.get_embed(),
+            view=self
+        )
 
 @client.tree.command(name="queue")
 async def _queue(interaction: discord.Interaction):
     await interaction.response.defer()
 
-    view = QueueView(interaction)
+    view = QueueView(interaction.guild.id)
     view.update_buttons()
 
     await interaction.edit_original_response(
@@ -1767,7 +2039,9 @@ async def stop(interaction: discord.Interaction):
         )
         return
 
-    yt_playlist.clear()
+    queue = get_queue_from_interaction(interaction)
+
+    queue.clear()
     vc.stop()
 
     await interaction.edit_original_response(
@@ -1788,7 +2062,9 @@ async def _disconnect(interaction: discord.Interaction):
         )
         return
 
-    yt_playlist.clear()
+    queue = get_queue_from_interaction(interaction)
+
+    queue.clear()
     await vc.disconnect(force=True)
 
     if interaction.guild.voice_client is None:
@@ -1834,6 +2110,27 @@ async def skip(interaction: discord.Interaction):
             content=f"Error! Something happened!\n{e}"
         )
 
+@client.tree.command(name="remove", description="Remove the selected song from the queue. Index starts at 1.")
+async def _remove(interaction: discord.Interaction, index : int):
+    await interaction.response.defer()
+
+    # 0-base index so code is cleaner. Users without programming knowledge will be too used to 1-base.
+    index -= 1
+
+    queue = get_queue_from_interaction(interaction)
+    if len(queue) < index or index < 0:
+        interaction.response.send_message(content = "Index is outside of the playlist bounds.", mention_author=True, ephemeral=True)
+    else:
+        try:
+            item = queue.pop(index)
+            interaction.response.send_message(content = f"Removed [{item["title"]}]({item["webpage_url"]}) (Original index: {index}) from queue!")
+        except Exception:
+            interaction.response.send_message(content = f"An awkward error happened when trying to remove the song from the queue. Oops!")
+    
+    if interaction.response is not None:
+        interaction.delete_original_response()
+
+
 
 
 
@@ -1852,7 +2149,7 @@ async def embedtest(interaction : discord.Interaction):
     ''' Sends a testing embed. '''
     await interaction.response.defer()
     embed = discord.Embed(title = "YouTube Player", color = 0xff00cc)
-    embed.set_author(name=interaction.client.user.display_name, icon_url=interaction.client.user.avatar, url="https://github.com/Wehrmachtserdbeere/Natsuki-Bot")
+    embed.set_author(name=interaction.client.user.display_name, icon_url=interaction.client.user.avatar, url=__repository__)
     j = 0
     for _ in et_names:
         embed.add_field(name=et_names[j], value=f"[{et_titles[j]}]({et_links[j]})", inline=False)
